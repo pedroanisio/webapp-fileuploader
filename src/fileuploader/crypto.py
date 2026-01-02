@@ -2,23 +2,25 @@
 Encryption utilities for data-at-rest protection.
 Uses AES-256-GCM for authenticated encryption.
 """
-import os
+
 import base64
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import os
+
 from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 NONCE_SIZE = 12  # 96 bits for GCM (recommended)
-KEY_SIZE = 32    # 256 bits for AES-256
+KEY_SIZE = 32  # 256 bits for AES-256
 
 # Magic bytes for common file types (used for legacy file detection)
 FILE_SIGNATURES = {
-    b'%PDF': 'pdf',
-    b'\x89PNG': 'png',
-    b'\xff\xd8\xff': 'jpg',
-    b'GIF87a': 'gif',
-    b'GIF89a': 'gif',
-    b'PK\x03\x04': 'zip',
-    b'!<arch>': 'pst',
+    b"%PDF": "pdf",
+    b"\x89PNG": "png",
+    b"\xff\xd8\xff": "jpg",
+    b"GIF87a": "gif",
+    b"GIF89a": "gif",
+    b"PK\x03\x04": "zip",
+    b"!<arch>": "pst",
 }
 
 
@@ -29,7 +31,7 @@ def generate_key() -> bytes:
 
 def generate_key_b64() -> str:
     """Generate a new 256-bit encryption key as base64 string."""
-    return base64.b64encode(generate_key()).decode('ascii')
+    return base64.b64encode(generate_key()).decode("ascii")
 
 
 def load_key_from_env(env_value: str) -> bytes:
@@ -93,7 +95,7 @@ def is_likely_encrypted(data: bytes) -> bool:
     try:
         # Only check first 1KB to avoid memory issues with large files
         sample = data[:1024]
-        sample.decode('utf-8')
+        sample.decode("utf-8")
         # If it's valid UTF-8 and starts with printable chars, likely plaintext
         if sample and all(c >= 0x20 or c in (0x09, 0x0A, 0x0D) for c in sample[:100]):
             return False
