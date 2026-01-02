@@ -38,7 +38,7 @@
 </div>
 
 <!-- Files Section -->
-<div class="page-card mb-4">
+<div class="page-card">
     {{ section_header('Your Files', 'fa-folder-open', badge=files | length ~ ' files') }}
     {% if files %}
     <div class="table-container">
@@ -84,71 +84,13 @@
     {{ empty_state('fa-folder-open', 'No files uploaded yet', 'Drag and drop files above to get started') }}
     {% endif %}
 </div>
-
-<!-- Quick Clipboard Section -->
-<div class="page-card">
-    <div class="section-header">
-        <h2 class="section-title"><i class="fas fa-clipboard" aria-hidden="true"></i> Quick Clipboard</h2>
-        <a href="{{ url_for('shared_clipboard') }}" class="btn btn-outline-primary btn-sm">
-            <i class="fas fa-external-link-alt" aria-hidden="true"></i> View All
-        </a>
-    </div>
-    <form id="clipboard-form" method="post" class="mb-4">
-        <div class="form-group">
-            <label for="clipboard-text" class="sr-only">Clipboard text</label>
-            <textarea id="clipboard-text" class="form-control" rows="3" placeholder="Paste text here to share..."></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save" aria-hidden="true"></i> Save Clipboard
-        </button>
-    </form>
-
-    {% if clipboard_files %}
-    <div class="clipboard-grid">
-        {% for file in clipboard_files[:4] %}
-        <div class="clipboard-card">
-            <div class="clipboard-card-header">
-                <i class="fas {{ file_icon(file.extension) }}" aria-hidden="true"></i>
-                <span class="filename-truncate" title="{{ file.name }}">{{ file.name }}</span>
-            </div>
-            <div class="clipboard-card-actions">
-                {% if file.name.endswith('.txt') %}
-                <button class="btn btn-secondary btn-sm copy-btn" data-text="{{ file.content | e }}" aria-label="Copy {{ file.name }}">
-                    <i class="fas fa-copy" aria-hidden="true"></i>
-                </button>
-                {% endif %}
-                <a href="{{ url_for('clipboard_file_raw', filename=file.name) }}" class="btn btn-info btn-sm" aria-label="Download {{ file.name }}">
-                    <i class="fas fa-download" aria-hidden="true"></i>
-                </a>
-                <button class="btn btn-success btn-sm share-btn" data-url="{{ url_for('clipboard_file', filename=file.name, _external=True) }}" aria-label="Share {{ file.name }}">
-                    <i class="fas fa-share-alt" aria-hidden="true"></i>
-                </button>
-                <button class="btn btn-danger btn-sm delete-btn" data-filename="{{ file.name }}" data-type="clipboard" aria-label="Delete {{ file.name }}">
-                    <i class="fas fa-trash" aria-hidden="true"></i>
-                </button>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% if clipboard_files | length > 4 %}
-    <div class="text-center mt-3">
-        <a href="{{ url_for('shared_clipboard') }}" class="btn btn-outline-primary">
-            View all {{ clipboard_files | length }} items <i class="fas fa-arrow-right" aria-hidden="true"></i>
-        </a>
-    </div>
-    {% endif %}
-    {% endif %}
-</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/files.js') }}"></script>
-<script src="{{ url_for('static', filename='js/clipboard.js') }}"></script>
 <script>
     const fileInput = document.getElementById('file-input');
     const dragDropArea = document.getElementById('drag-drop-area');
-    const clipboardForm = document.getElementById('clipboard-form');
-    const clipboardText = document.getElementById('clipboard-text');
     const uploadProgress = document.getElementById('upload-progress');
     const progressBar = document.getElementById('progress-bar');
 
@@ -177,7 +119,7 @@
             const response = xhr.response || {};
             if (xhr.status >= 200 && xhr.status < 300 && response.status === 'success') {
                 showToast(response.message || 'File uploaded!', 'success');
-                setTimeout(() => location.reload(), 1000);
+                setTimeout(() => location.reload(), 5000);
             } else {
                 showToast(response.message || 'Upload failed.', 'error');
                 uploadProgress.style.display = 'none';
@@ -212,29 +154,6 @@
         if (e.dataTransfer.files.length > 0) uploadWithProgress(e.dataTransfer.files);
     });
 
-    clipboardForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData();
-        formData.append('clipboard_data', clipboardText.value);
-        const response = await fetch('/clipboard', { method: 'POST', body: formData });
-        const result = await response.json();
-        if (result.status === 'success') {
-            showToast('Clipboard saved!', 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showToast(result.message, 'error');
-        }
-    });
-
-    // Copy button handlers
-    document.querySelectorAll('.copy-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            navigator.clipboard.writeText(e.currentTarget.getAttribute('data-text'))
-                .then(() => showToast('Copied!', 'success'))
-                .catch(() => showToast('Failed to copy.', 'error'));
-        });
-    });
-
     // Share button handlers
     document.querySelectorAll('.share-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -248,21 +167,19 @@
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const filename = e.currentTarget.getAttribute('data-filename');
-            const type = e.currentTarget.getAttribute('data-type');
             const itemName = filename.length > 30 ? filename.substring(0, 30) + '...' : filename;
 
             showConfirmModal({
-                title: 'Delete ' + (type === 'clipboard' ? 'Clipboard Item' : 'File'),
+                title: 'Delete File',
                 message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
                 confirmText: 'Delete',
                 onConfirm: async () => {
-                    const url = type === 'clipboard' ? `/delete/clipboard/${filename}` : `/delete/${filename}`;
                     try {
-                        const response = await fetch(url, { method: 'DELETE' });
+                        const response = await fetch(`/delete/${filename}`, { method: 'DELETE' });
                         const result = await response.json();
                         if (result.status === 'success') {
                             showToast('Deleted!', 'success');
-                            setTimeout(() => location.reload(), 1000);
+                            setTimeout(() => location.reload(), 5000);
                         } else {
                             showToast(result.message || 'Failed to delete.', 'error');
                         }
