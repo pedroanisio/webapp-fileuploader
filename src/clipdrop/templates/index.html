@@ -292,21 +292,29 @@
     });
 
     document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
             const filename = e.currentTarget.getAttribute('data-filename');
             const type = e.currentTarget.getAttribute('data-type');
-            if (!confirm('Delete this item?')) return;
-            const url = type === 'clipboard' ? `/delete/clipboard/${filename}` : `/delete/${filename}`;
-            try {
-                const response = await fetch(url, { method: 'DELETE' });
-                const result = await response.json();
-                if (result.status === 'success') {
-                    showToast('Deleted!', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showToast(result.message || 'Failed to delete.', 'error');
+            const itemName = filename.length > 30 ? filename.substring(0, 30) + '...' : filename;
+
+            showConfirmModal({
+                title: 'Delete ' + (type === 'clipboard' ? 'Clipboard Item' : 'File'),
+                message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
+                confirmText: 'Delete',
+                onConfirm: async () => {
+                    const url = type === 'clipboard' ? `/delete/clipboard/${filename}` : `/delete/${filename}`;
+                    try {
+                        const response = await fetch(url, { method: 'DELETE' });
+                        const result = await response.json();
+                        if (result.status === 'success') {
+                            showToast('Deleted!', 'success');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast(result.message || 'Failed to delete.', 'error');
+                        }
+                    } catch { showToast('Failed to delete.', 'error'); }
                 }
-            } catch { showToast('Failed to delete.', 'error'); }
+            });
         });
     });
 </script>

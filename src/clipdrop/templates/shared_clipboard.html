@@ -156,22 +156,30 @@
     });
 
     document.querySelectorAll('.delete-btn').forEach(button => {
-        button.addEventListener('click', async () => {
-            if (!confirm('Delete this clipboard item?')) return;
+        button.addEventListener('click', () => {
+            const filename = button.getAttribute('data-filename');
+            const itemName = filename.length > 30 ? filename.substring(0, 30) + '...' : filename;
 
-            try {
-                const response = await fetch(`/delete/clipboard/${button.getAttribute('data-filename')}`, { method: 'DELETE' });
-                const result = await response.json();
+            showConfirmModal({
+                title: 'Delete Clipboard Item',
+                message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
+                confirmText: 'Delete',
+                onConfirm: async () => {
+                    try {
+                        const response = await fetch(`/delete/clipboard/${filename}`, { method: 'DELETE' });
+                        const result = await response.json();
 
-                if (result.status === 'success') {
-                    showToast('Deleted!', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showToast(result.message || 'Failed to delete', 'error');
+                        if (result.status === 'success') {
+                            showToast('Deleted!', 'success');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast(result.message || 'Failed to delete', 'error');
+                        }
+                    } catch (error) {
+                        showToast('Failed to delete', 'error');
+                    }
                 }
-            } catch (error) {
-                showToast('Failed to delete', 'error');
-            }
+            });
         });
     });
 </script>

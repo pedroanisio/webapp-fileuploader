@@ -125,6 +125,27 @@
     </nav>
     {% endif %}
 
+    <!-- Confirmation Modal -->
+    <div class="modal-backdrop" id="confirm-modal-backdrop"></div>
+    <div class="modal modal-danger" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+        <div class="modal-header">
+            <h3 class="modal-title" id="confirm-modal-title">Confirm Action</h3>
+            <button class="modal-close" aria-label="Close" id="confirm-modal-close">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p id="confirm-modal-message">Are you sure you want to proceed?</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline-secondary" id="confirm-modal-cancel">Cancel</button>
+            <button class="btn btn-danger" id="confirm-modal-confirm">
+                <i class="fas fa-trash" aria-hidden="true"></i>
+                <span>Delete</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
@@ -201,6 +222,83 @@
                 }
             }, 4000);
         }
+
+        // Confirmation modal functionality
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmModalBackdrop = document.getElementById('confirm-modal-backdrop');
+        const confirmModalTitle = document.getElementById('confirm-modal-title');
+        const confirmModalMessage = document.getElementById('confirm-modal-message');
+        const confirmModalClose = document.getElementById('confirm-modal-close');
+        const confirmModalCancel = document.getElementById('confirm-modal-cancel');
+        const confirmModalConfirm = document.getElementById('confirm-modal-confirm');
+        let confirmCallback = null;
+        let previousActiveElement = null;
+
+        function showConfirmModal(options = {}) {
+            const {
+                title = 'Confirm Delete',
+                message = 'Are you sure you want to delete this item? This action cannot be undone.',
+                confirmText = 'Delete',
+                confirmIcon = 'fa-trash',
+                onConfirm = null
+            } = options;
+
+            previousActiveElement = document.activeElement;
+            confirmModalTitle.textContent = title;
+            confirmModalMessage.textContent = message;
+            confirmModalConfirm.querySelector('span').textContent = confirmText;
+            confirmModalConfirm.querySelector('i').className = `fas ${confirmIcon}`;
+            confirmCallback = onConfirm;
+
+            confirmModal.classList.add('is-visible');
+            confirmModalBackdrop.classList.add('is-visible');
+            document.body.style.overflow = 'hidden';
+            confirmModalConfirm.focus();
+        }
+
+        function hideConfirmModal() {
+            confirmModal.classList.remove('is-visible');
+            confirmModalBackdrop.classList.remove('is-visible');
+            document.body.style.overflow = '';
+            confirmCallback = null;
+            if (previousActiveElement) {
+                previousActiveElement.focus();
+            }
+        }
+
+        confirmModalClose.addEventListener('click', hideConfirmModal);
+        confirmModalCancel.addEventListener('click', hideConfirmModal);
+        confirmModalBackdrop.addEventListener('click', hideConfirmModal);
+
+        confirmModalConfirm.addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+            }
+            hideConfirmModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && confirmModal.classList.contains('is-visible')) {
+                hideConfirmModal();
+            }
+        });
+
+        // Focus trap for modal
+        confirmModal.addEventListener('keydown', (e) => {
+            if (e.key !== 'Tab') return;
+
+            const focusable = confirmModal.querySelectorAll('button:not([disabled])');
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        });
     </script>
     {% block scripts %}{% endblock %}
 </body>
