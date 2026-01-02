@@ -1,0 +1,24 @@
+{# ==========================================================================
+   Confirmation Modal Component
+   A reusable modal for delete confirmations and other destructive actions
+   ========================================================================== #}
+
+<div class="modal-backdrop" id="confirm-modal-backdrop"></div>
+<div class="modal modal-danger" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <div class="modal-header">
+        <h3 class="modal-title" id="confirm-modal-title">Confirm Action</h3>
+        <button class="modal-close" aria-label="Close" id="confirm-modal-close">
+            <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+    </div>
+    <div class="modal-body">
+        <p id="confirm-modal-message">Are you sure you want to proceed?</p>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline-secondary" id="confirm-modal-cancel">Cancel</button>
+        <button class="btn btn-danger" id="confirm-modal-confirm">
+            <i class="fas fa-trash" aria-hidden="true"></i>
+            <span>Delete</span>
+        </button>
+    </div>
+</div>

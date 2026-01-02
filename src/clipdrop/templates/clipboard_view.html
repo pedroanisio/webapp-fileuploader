@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_header, section_header, empty_state, file_icon, button %}
 
 {% block title %}{{ file.name if file else 'Not Found' }} - ClipDrop{% endblock %}
 
@@ -10,11 +11,7 @@
         <i class="fas fa-arrow-left" aria-hidden="true"></i> Back to Clipboard
     </a>
     <h1 class="page-title">
-        {% if file.extension in ['png', 'jpg', 'jpeg', 'gif'] %}
-            <i class="fas fa-image" aria-hidden="true"></i>
-        {% else %}
-            <i class="fas fa-file-alt" aria-hidden="true"></i>
-        {% endif %}
+        <i class="fas {{ file_icon(file.extension) }}" aria-hidden="true"></i>
         Shared Content
     </h1>
     <p class="page-subtitle">
@@ -54,19 +51,20 @@
 {% else %}
 <!-- Not Found State -->
 <div class="page-card">
-    <div class="empty-state">
-        <i class="fas fa-exclamation-circle text-danger" aria-hidden="true"></i>
-        <h2>Content Not Found</h2>
-        <p class="text-muted">This clipboard item may have expired or been deleted.</p>
-        <a href="{{ url_for('shared_clipboard') }}" class="btn btn-primary mt-3">
-            <i class="fas fa-arrow-left" aria-hidden="true"></i> Go to Shared Clipboard
-        </a>
-    </div>
+    {{ empty_state(
+        'fa-exclamation-circle text-danger',
+        'Content Not Found',
+        'This clipboard item may have expired or been deleted.',
+        url_for('shared_clipboard'),
+        'Go to Shared Clipboard',
+        'fa-arrow-left'
+    ) }}
 </div>
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/clipboard.js') }}"></script>
 <script>
     const copyBtn = document.getElementById('copy-btn');
     if (copyBtn) {

@@ -1,32 +1,12 @@
 {% extends "base.html" %}
+{% from "macros.html" import flash_messages, page_header, section_header %}
 
 {% block title %}Sign In - ClipDrop{% endblock %}
 
 {% block content %}
 <div class="auth-container">
-    {% with messages = get_flashed_messages(with_categories=True) %}
-      {% if messages %}
-        <div class="mb-3">
-          {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-              {% if category == 'success' %}
-                <i class="fas fa-check-circle mr-2" aria-hidden="true"></i>
-              {% elif category == 'danger' %}
-                <i class="fas fa-times-circle mr-2" aria-hidden="true"></i>
-              {% elif category == 'warning' %}
-                <i class="fas fa-exclamation-triangle mr-2" aria-hidden="true"></i>
-              {% else %}
-                <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>
-              {% endif %}
-              <span>{{ message }}</span>
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+    <!-- Flash Messages -->
+    {{ flash_messages() }}
 
     <div class="auth-page-header">
         <h1 class="page-title"><i class="fas fa-user-lock" aria-hidden="true"></i> Sign in</h1>
@@ -34,10 +14,7 @@
     </div>
 
     <div class="page-card auth-card">
-        <div class="section-header auth-card-header">
-            <h2 class="section-title"><i class="fab fa-github" aria-hidden="true"></i> GitHub</h2>
-            <span class="section-badge">OAuth 2.0</span>
-        </div>
+        {{ section_header('GitHub', 'fab fa-github', badge='OAuth 2.0') }}
         <p class="auth-card-text">
             We create a local account using your GitHub profile and store your login details securely in SQLite.
         </p>

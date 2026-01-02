@@ -1,44 +1,18 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_header, section_header, flash_messages, empty_state, file_icon %}
 
 {% block title %}Files - ClipDrop{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
-<div class="page-header mb-4">
-    <h1 class="page-title"><i class="fas fa-cloud-upload-alt" aria-hidden="true"></i> Files</h1>
-    <p class="page-subtitle">Upload and share files securely</p>
-</div>
+{{ page_header('Files', 'fa-cloud-upload-alt', 'Upload and share files securely') }}
 
-{% with messages = get_flashed_messages(with_categories=True) %}
-  {% if messages %}
-    <div class="mb-3">
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-          {% if category == 'success' %}
-            <i class="fas fa-check-circle mr-2" aria-hidden="true"></i>
-          {% elif category == 'danger' %}
-            <i class="fas fa-times-circle mr-2" aria-hidden="true"></i>
-          {% elif category == 'warning' %}
-            <i class="fas fa-exclamation-triangle mr-2" aria-hidden="true"></i>
-          {% else %}
-            <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>
-          {% endif %}
-          <span>{{ message }}</span>
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endwith %}
+<!-- Flash Messages -->
+{{ flash_messages() }}
 
 <!-- Upload Section -->
 <div class="page-card mb-4">
-    <div class="section-header">
-        <h2 class="section-title"><i class="fas fa-upload" aria-hidden="true"></i> Upload Files</h2>
-        <span class="section-badge">{{ allowed_extensions | join(', ') }}</span>
-    </div>
+    {{ section_header('Upload Files', 'fa-upload', badge=allowed_extensions | join(', ')) }}
     <form id="upload-form" method="post" enctype="multipart/form-data">
         <div class="form-group">
             <input type="file" name="file" id="file-input" class="form-control-file d-none">
@@ -65,13 +39,10 @@
 
 <!-- Files Section -->
 <div class="page-card mb-4">
-    <div class="section-header">
-        <h2 class="section-title"><i class="fas fa-folder-open" aria-hidden="true"></i> Your Files</h2>
-        <span class="section-badge">{{ files | length }} files</span>
-    </div>
+    {{ section_header('Your Files', 'fa-folder-open', badge=files | length ~ ' files') }}
     {% if files %}
     <div class="table-container">
-        <table class="table">
+        <table class="table files-table">
             <thead>
                 <tr>
                     <th>Type</th>
@@ -85,22 +56,8 @@
                 {% for file in files %}
                 <tr>
                     <td>
-                        {% if file.extension in ['png', 'jpg', 'jpeg', 'gif'] %}
-                            <i class="fas fa-file-image text-info" aria-hidden="true"></i>
-                            <span class="sr-only">Image file</span>
-                        {% elif file.extension == 'pdf' %}
-                            <i class="fas fa-file-pdf text-danger" aria-hidden="true"></i>
-                            <span class="sr-only">PDF file</span>
-                        {% elif file.extension == 'txt' %}
-                            <i class="fas fa-file-alt text-secondary" aria-hidden="true"></i>
-                            <span class="sr-only">Text file</span>
-                        {% elif file.extension == 'pst' %}
-                            <i class="fas fa-envelope text-warning" aria-hidden="true"></i>
-                            <span class="sr-only">Outlook PST file</span>
-                        {% else %}
-                            <i class="fas fa-file text-muted" aria-hidden="true"></i>
-                            <span class="sr-only">File</span>
-                        {% endif %}
+                        <i class="fas {{ file_icon(file.extension) }}" aria-hidden="true"></i>
+                        <span class="sr-only">{{ file.extension or 'Unknown' }} file</span>
                     </td>
                     <td class="filename-cell" title="{{ file.name }}">{{ file.name }}</td>
                     <td>{{ file.size_human }}</td>
@@ -124,11 +81,7 @@
         </table>
     </div>
     {% else %}
-    <div class="empty-state">
-        <i class="fas fa-folder-open" aria-hidden="true"></i>
-        <h4>No files uploaded yet</h4>
-        <p>Drag and drop files above to get started</p>
-    </div>
+    {{ empty_state('fa-folder-open', 'No files uploaded yet', 'Drag and drop files above to get started') }}
     {% endif %}
 </div>
 
@@ -155,11 +108,7 @@
         {% for file in clipboard_files[:4] %}
         <div class="clipboard-card">
             <div class="clipboard-card-header">
-                {% if file.extension in ['png', 'jpg', 'jpeg', 'gif'] %}
-                    <i class="fas fa-file-image text-info" aria-hidden="true"></i>
-                {% else %}
-                    <i class="fas fa-file-alt text-secondary" aria-hidden="true"></i>
-                {% endif %}
+                <i class="fas {{ file_icon(file.extension) }}" aria-hidden="true"></i>
                 <span class="filename-truncate" title="{{ file.name }}">{{ file.name }}</span>
             </div>
             <div class="clipboard-card-actions">
@@ -193,6 +142,8 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/files.js') }}"></script>
+<script src="{{ url_for('static', filename='js/clipboard.js') }}"></script>
 <script>
     const fileInput = document.getElementById('file-input');
     const dragDropArea = document.getElementById('drag-drop-area');
@@ -275,6 +226,7 @@
         }
     });
 
+    // Copy button handlers
     document.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             navigator.clipboard.writeText(e.currentTarget.getAttribute('data-text'))
@@ -283,6 +235,7 @@
         });
     });
 
+    // Share button handlers
     document.querySelectorAll('.share-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             navigator.clipboard.writeText(e.currentTarget.getAttribute('data-url'))
@@ -291,6 +244,7 @@
         });
     });
 
+    // Delete button handlers using confirmation modal
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const filename = e.currentTarget.getAttribute('data-filename');

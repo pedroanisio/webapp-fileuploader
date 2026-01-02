@@ -1,19 +1,18 @@
 {% extends "base.html" %}
+{% from "macros.html" import page_header, section_header, flash_messages, empty_state, file_icon %}
 
 {% block title %}Clipboard - ClipDrop{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
-<div class="page-header mb-4">
-    <h1 class="page-title"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Shared Clipboard</h1>
-    <p class="page-subtitle">Share text and images instantly</p>
-</div>
+{{ page_header('Shared Clipboard', 'fa-clipboard-list', 'Share text and images instantly') }}
+
+<!-- Flash Messages -->
+{{ flash_messages() }}
 
 <!-- Quick Paste Section -->
 <div class="page-card mb-4">
-    <div class="section-header">
-        <h2 class="section-title"><i class="fas fa-paste" aria-hidden="true"></i> Quick Paste</h2>
-    </div>
+    {{ section_header('Quick Paste', 'fa-paste') }}
     <form id="clipboard-form">
         <div class="form-group">
             <label for="clipboard-text" class="sr-only">Text to save</label>
@@ -27,10 +26,7 @@
 
 <!-- Clipboard Items -->
 <div class="page-card">
-    <div class="section-header">
-        <h2 class="section-title"><i class="fas fa-history" aria-hidden="true"></i> Recent Items</h2>
-        <span class="section-badge">{{ clipboard_files | length }} items</span>
-    </div>
+    {{ section_header('Recent Items', 'fa-history', badge=clipboard_files | length ~ ' items') }}
 
     {% if clipboard_files %}
     <div class="clipboard-list">
@@ -38,11 +34,7 @@
         <div class="clipboard-item" id="item-{{ loop.index }}">
             <div class="clipboard-item-header">
                 <div class="clipboard-item-info">
-                    {% if file.extension in ['png', 'jpg', 'jpeg', 'gif'] %}
-                        <i class="fas fa-image text-info" aria-hidden="true"></i>
-                    {% else %}
-                        <i class="fas fa-file-alt text-secondary" aria-hidden="true"></i>
-                    {% endif %}
+                    <i class="fas {{ file_icon(file.extension) }}" aria-hidden="true"></i>
                     <span class="clipboard-item-name">{{ file.name }}</span>
                 </div>
                 <div class="clipboard-item-meta">
@@ -83,16 +75,13 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="empty-state">
-        <i class="fas fa-clipboard" aria-hidden="true"></i>
-        <h4>No clipboard items yet</h4>
-        <p>Use the Quick Paste form above to add your first item</p>
-    </div>
+    {{ empty_state('fa-clipboard', 'No clipboard items yet', 'Use the Quick Paste form above to add your first item') }}
     {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/clipboard.js') }}"></script>
 <script>
     document.getElementById('clipboard-form').addEventListener('submit', async (event) => {
         event.preventDefault();

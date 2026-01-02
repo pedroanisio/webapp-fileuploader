@@ -1,93 +1,101 @@
 # ClipDrop
 
-ClipDrop is a web application that allows users to upload files and manage clipboard content. Users can drag and drop files for upload, view and download uploaded files, and manage clipboard text and images. Clipboard text content can be viewed in an accordion-style interface, and users can easily copy text content with a click.
+ClipDrop is a Flask web app for authenticated file uploads and shared clipboard entries.
+Upload files, save clipboard text or images, and share/download them from a single UI. Files can be
+encrypted at rest and are cleaned up automatically every 24 hours.
 
 ## Features
 
-- Drag and drop file upload
-- View and download uploaded files
-- Clipboard text and image management
-- View text content in an accordion-style interface
-- Copy text content with a click
-- Files are automatically cleaned up every 24 hours
-- AES-256-GCM encryption for files at rest
-- GitHub OAuth authentication
+- Drag-and-drop file uploads with download/delete actions
+- Clipboard text and image capture with a dedicated viewer
+- GitHub OAuth sign-in (required to access the app)
+- AES-256-GCM encryption for files at rest (optional)
+- Automatic cleanup of files after 24 hours
+- Local SQLite storage for user accounts and OAuth tokens
+
+## Supported File Types
+
+`txt`, `pdf`, `png`, `jpg`, `jpeg`, `gif`, `pst`, `md`, `json`, `zip`, `tar`, `py`, `html`, `css`
 
 ## Technology Stack
 
-- Flask (Python web framework)
-- Flask-SQLAlchemy (Database ORM)
-- Flask-Login & Flask-Dance (Authentication)
-- APScheduler (Python library for scheduling tasks)
-- Bootstrap (CSS framework for responsive design)
-- JavaScript for client-side functionality
+- Flask, Flask-Login, Flask-Dance
+- Flask-SQLAlchemy + SQLite (default)
+- APScheduler
+- Bootstrap + JavaScript
 
 ## Setup and Installation
 
 ### Prerequisites
 
-- Docker
 - Python 3.10+
 - uv or pip
 
 ### Environment Variables
 
-Create a `.env` file in the project root directory with the following content:
+Create a `.env` file in the project root directory (required for local/dev and Docker):
+
 ```
 SECRET_KEY=your-unique-secret
-ENCRYPTION_KEY=your-base64-encoded-key  # Optional
-GITHUB_OAUTH_CLIENT_ID=your-client-id    # Optional
-GITHUB_OAUTH_CLIENT_SECRET=your-secret   # Optional
+ENCRYPTION_KEY=your-base64-encoded-key
+GITHUB_OAUTH_CLIENT_ID=your-client-id
+GITHUB_OAUTH_CLIENT_SECRET=your-secret
+DATABASE_URL=sqlite:///clipdrop.db
+UPLOAD_FOLDER=uploads
+CLIPBOARD_FOLDER=clipboard
+PORT=3000
 ```
 
-You can generate a secret key automatically:
+- `SECRET_KEY` is required to boot the app.
+- `ENCRYPTION_KEY` is optional; when unset, files are stored unencrypted.
+- GitHub OAuth credentials are required to sign in.
+- `DATABASE_URL`, `UPLOAD_FOLDER`, `CLIPBOARD_FOLDER`, and `PORT` are optional overrides.
+
+Generate a `.env` with `SECRET_KEY` + `ENCRYPTION_KEY`:
 ```sh
 ./scripts/generate_secret.sh
 ```
 
-
 ### Installation
 
 1. **Clone the repository:**
-    ```sh
-    git clone https://github.com/pedroanisio/clipdrop.git
-    cd clipdrop
-    ```
+   ```sh
+   git clone https://github.com/pedroanisio/clipdrop.git
+   cd clipdrop
+   ```
 
 2. **Install dependencies:**
-    ```sh
-    pip install .
-    # or with uv
-    uv pip install .
-    ```
+   ```sh
+   pip install .
+   # or with uv
+   uv pip install .
+   ```
 
-3. **Run the application:**
-    ```sh
-    clipdrop
-    # or
-    python -m clipdrop
-    ```
+3. **Run the application (default http://localhost:3000):**
+   ```sh
+   clipdrop
+   # or
+   python -m clipdrop
+   ```
 
 ### Docker
 
-1. **Build and run the Docker container:**
-    ```sh
-    docker build -t clipdrop .
-    docker run -p 3010:3010 clipdrop
-    ```
+Use the production compose file (runs gunicorn on port 3000, mapped to 3020 locally):
+```sh
+docker compose up --build
+```
 
-   Or use `docker-compose`:
-    ```sh
-    docker-compose up
-    ```
+For development with the Flask server:
+```sh
+docker compose -f docker-compose.dev.yml up --build
+```
 
 ### Usage
 
-- Open your web browser and navigate to `http://localhost:3010`.
-- Sign in with GitHub (if OAuth is configured) or access directly.
-- Drag and drop files into the designated area to upload.
-- View, download, and manage uploaded files.
-- Paste text into the clipboard section and save it. View, download, and copy clipboard text content.
+- Open `http://localhost:3000` (or `http://localhost:3020` when using Docker).
+- Sign in with GitHub OAuth.
+- Upload files via drag-and-drop or save clipboard text/images.
+- View, download, or delete uploaded items.
 
 ### File Structure
 

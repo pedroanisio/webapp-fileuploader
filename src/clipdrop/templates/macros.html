@@ -1,0 +1,502 @@
+{# ==========================================================================
+   Reusable Jinja2 Macros for ClipDrop UI Components
+   ========================================================================== #}
+
+{# --------------------------------------------------------------------------
+   Flash Messages
+   Displays flash messages with appropriate styling and icons
+
+   Usage:
+     {{ flash_messages() }}
+   -------------------------------------------------------------------------- #}
+{% macro flash_messages() %}
+{% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    <div class="flash-messages mb-3">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {% if category == 'success' %}
+                <i class="fas fa-check-circle" aria-hidden="true"></i>
+            {% elif category == 'danger' or category == 'error' %}
+                <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+            {% elif category == 'warning' %}
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+            {% else %}
+                <i class="fas fa-info-circle" aria-hidden="true"></i>
+            {% endif %}
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endwith %}
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Page Header
+   Renders a consistent page header with title and optional subtitle
+
+   Usage:
+     {{ page_header('My Files', 'fa-folder-open', 'Manage your uploaded files') }}
+   -------------------------------------------------------------------------- #}
+{% macro page_header(title, icon=None, subtitle=None) %}
+<div class="page-header mb-4">
+    <h1 class="page-title">
+        {% if icon %}<i class="fas {{ icon }}" aria-hidden="true"></i> {% endif %}{{ title }}
+    </h1>
+    {% if subtitle %}
+    <p class="page-subtitle">{{ subtitle }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Section Header
+   Renders a section header with title, optional badge, and optional action
+
+   Usage:
+     {{ section_header('Recent Files', 'fa-clock', badge='5 items') }}
+     {{ section_header('Upload', 'fa-upload', action_url='/new', action_text='Add New') }}
+   -------------------------------------------------------------------------- #}
+{% macro section_header(title, icon=None, badge=None, action_url=None, action_text=None, action_icon=None) %}
+<div class="section-header">
+    <h2 class="section-title">
+        {% if icon %}<i class="fas {{ icon }}" aria-hidden="true"></i> {% endif %}{{ title }}
+    </h2>
+    {% if badge %}
+    <span class="section-badge">{{ badge }}</span>
+    {% endif %}
+    {% if action_url and action_text %}
+    <a href="{{ action_url }}" class="btn btn-sm btn-primary section-action">
+        {% if action_icon %}<i class="fas {{ action_icon }}" aria-hidden="true"></i> {% endif %}{{ action_text }}
+    </a>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Empty State
+   Renders an empty state placeholder with icon, title, and optional action
+
+   Usage:
+     {{ empty_state('fa-folder-open', 'No files yet', 'Upload your first file to get started') }}
+     {{ empty_state('fa-clipboard', 'No clipboard items', action_url='/new', action_text='Add Item') }}
+   -------------------------------------------------------------------------- #}
+{% macro empty_state(icon, title, subtitle=None, action_url=None, action_text=None, action_icon=None) %}
+<div class="empty-state">
+    <i class="fas {{ icon }}" aria-hidden="true"></i>
+    <h4>{{ title }}</h4>
+    {% if subtitle %}
+    <p>{{ subtitle }}</p>
+    {% endif %}
+    {% if action_url and action_text %}
+    <a href="{{ action_url }}" class="btn btn-primary">
+        {% if action_icon %}<i class="fas {{ action_icon }}" aria-hidden="true"></i> {% endif %}{{ action_text }}
+    </a>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   File Type Icon
+   Returns the appropriate icon class based on file extension
+
+   Usage:
+     {{ file_icon('pdf') }}
+     {{ file_icon(file.extension) }}
+   -------------------------------------------------------------------------- #}
+{% macro file_icon(extension) %}
+{% set ext = extension|lower if extension else '' %}
+{% if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'] %}
+fa-file-image
+{% elif ext in ['pdf'] %}
+fa-file-pdf
+{% elif ext in ['doc', 'docx'] %}
+fa-file-word
+{% elif ext in ['xls', 'xlsx'] %}
+fa-file-excel
+{% elif ext in ['ppt', 'pptx'] %}
+fa-file-powerpoint
+{% elif ext in ['zip', 'rar', '7z', 'tar', 'gz'] %}
+fa-file-archive
+{% elif ext in ['mp3', 'wav', 'ogg', 'flac', 'aac'] %}
+fa-file-audio
+{% elif ext in ['mp4', 'avi', 'mkv', 'mov', 'webm'] %}
+fa-file-video
+{% elif ext in ['txt', 'md', 'rtf'] %}
+fa-file-alt
+{% elif ext in ['html', 'css', 'js', 'json', 'xml', 'py', 'java', 'cpp', 'c', 'h', 'php', 'rb', 'go', 'rs', 'ts'] %}
+fa-file-code
+{% else %}
+fa-file
+{% endif %}
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   File Action Buttons
+   Renders action buttons for file operations (download, share, delete)
+
+   Usage:
+     {{ file_actions(file, download_url, show_share=True) }}
+   -------------------------------------------------------------------------- #}
+{% macro file_actions(file, download_url, show_share=True, show_delete=True, btn_size='btn-sm') %}
+<div class="btn-group-actions">
+    <a href="{{ download_url }}" class="btn btn-info {{ btn_size }}" title="Download">
+        <i class="fas fa-download" aria-hidden="true"></i>
+        <span class="btn-text">Download</span>
+    </a>
+    {% if show_share %}
+    <button type="button" class="btn btn-success {{ btn_size }} share-btn"
+            data-filename="{{ file.filename }}"
+            data-url="{{ download_url }}"
+            title="Share">
+        <i class="fas fa-share-alt" aria-hidden="true"></i>
+        <span class="btn-text">Share</span>
+    </button>
+    {% endif %}
+    {% if show_delete %}
+    <button type="button" class="btn btn-danger {{ btn_size }} delete-btn"
+            data-filename="{{ file.filename }}"
+            title="Delete">
+        <i class="fas fa-trash" aria-hidden="true"></i>
+        <span class="btn-text">Delete</span>
+    </button>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Clipboard Action Buttons
+   Renders action buttons for clipboard operations (copy, share, delete)
+
+   Usage:
+     {{ clipboard_actions(item, show_view=True) }}
+   -------------------------------------------------------------------------- #}
+{% macro clipboard_actions(item, show_view=True, show_copy=True, show_share=True, show_delete=True, btn_size='btn-sm') %}
+<div class="btn-group-actions">
+    {% if show_view %}
+    <a href="{{ url_for('view_clipboard_item', item_id=item.id) }}" class="btn btn-info {{ btn_size }}" title="View">
+        <i class="fas fa-eye" aria-hidden="true"></i>
+        <span class="btn-text">View</span>
+    </a>
+    {% endif %}
+    {% if show_copy %}
+    <button type="button" class="btn btn-primary {{ btn_size }} copy-btn"
+            data-content="{{ item.content }}"
+            title="Copy to clipboard">
+        <i class="fas fa-copy" aria-hidden="true"></i>
+        <span class="btn-text">Copy</span>
+    </button>
+    {% endif %}
+    {% if show_share %}
+    <button type="button" class="btn btn-success {{ btn_size }} clipboard-share-btn"
+            data-id="{{ item.id }}"
+            data-content="{{ item.content[:100] }}..."
+            title="Share">
+        <i class="fas fa-share-alt" aria-hidden="true"></i>
+        <span class="btn-text">Share</span>
+    </button>
+    {% endif %}
+    {% if show_delete %}
+    <button type="button" class="btn btn-danger {{ btn_size }} clipboard-delete-btn"
+            data-id="{{ item.id }}"
+            title="Delete">
+        <i class="fas fa-trash" aria-hidden="true"></i>
+        <span class="btn-text">Delete</span>
+    </button>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   User Avatar
+   Renders user avatar with fallback to placeholder icon
+
+   Usage:
+     {{ user_avatar(current_user) }}
+     {{ user_avatar(current_user, size='lg') }}
+   -------------------------------------------------------------------------- #}
+{% macro user_avatar(user, size='md', show_name=False) %}
+<div class="user-avatar-container user-avatar-{{ size }}">
+    {% if user.avatar_url %}
+    <img src="{{ user.avatar_url }}" alt="{{ user.username }}'s avatar" class="user-avatar">
+    {% else %}
+    <span class="user-avatar-placeholder" aria-hidden="true">
+        <i class="fas fa-user"></i>
+    </span>
+    {% endif %}
+    {% if show_name %}
+    <span class="user-name">{{ user.username }}</span>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Form Group
+   Renders a form input with label and optional help text
+
+   Usage:
+     {{ form_group('email', 'Email Address', type='email', required=True) }}
+     {{ form_group('bio', 'Biography', element='textarea', rows=4) }}
+   -------------------------------------------------------------------------- #}
+{% macro form_group(name, label, type='text', placeholder='', required=False, value='', help_text='', element='input', rows=3, options=None) %}
+<div class="form-group">
+    <label for="{{ name }}" class="form-label">
+        {{ label }}
+        {% if required %}<span class="text-danger" aria-hidden="true">*</span>{% endif %}
+    </label>
+    {% if element == 'textarea' %}
+    <textarea
+        id="{{ name }}"
+        name="{{ name }}"
+        class="form-control"
+        placeholder="{{ placeholder }}"
+        rows="{{ rows }}"
+        {% if required %}required{% endif %}
+    >{{ value }}</textarea>
+    {% elif element == 'select' %}
+    <select id="{{ name }}" name="{{ name }}" class="form-control" {% if required %}required{% endif %}>
+        {% if placeholder %}
+        <option value="">{{ placeholder }}</option>
+        {% endif %}
+        {% for opt in options or [] %}
+        <option value="{{ opt.value }}" {% if opt.value == value %}selected{% endif %}>{{ opt.label }}</option>
+        {% endfor %}
+    </select>
+    {% else %}
+    <input
+        type="{{ type }}"
+        id="{{ name }}"
+        name="{{ name }}"
+        class="form-control"
+        placeholder="{{ placeholder }}"
+        value="{{ value }}"
+        {% if required %}required{% endif %}
+    >
+    {% endif %}
+    {% if help_text %}
+    <small class="form-text text-muted">{{ help_text }}</small>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Card Component
+   Renders a card with optional header, body, and footer
+
+   Usage:
+     {% call card(title='My Card', icon='fa-cog') %}
+       <p>Card content here</p>
+     {% endcall %}
+   -------------------------------------------------------------------------- #}
+{% macro card(title=None, icon=None, footer=None, class='') %}
+<div class="card {{ class }}">
+    {% if title %}
+    <div class="card-header">
+        <h3 class="card-title">
+            {% if icon %}<i class="fas {{ icon }}" aria-hidden="true"></i> {% endif %}{{ title }}
+        </h3>
+    </div>
+    {% endif %}
+    <div class="card-body">
+        {{ caller() }}
+    </div>
+    {% if footer %}
+    <div class="card-footer">
+        {{ footer }}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Button
+   Renders a button with consistent styling
+
+   Usage:
+     {{ button('Submit', type='submit', variant='primary') }}
+     {{ button('Cancel', href='/back', variant='outline-secondary') }}
+   -------------------------------------------------------------------------- #}
+{% macro button(text, type='button', variant='primary', size='', icon=None, href=None, class='', disabled=False, data={}) %}
+{% set btn_class = 'btn btn-' ~ variant ~ (' btn-' ~ size if size else '') ~ (' ' ~ class if class else '') %}
+{% if href %}
+<a href="{{ href }}" class="{{ btn_class }}" {% if disabled %}aria-disabled="true" tabindex="-1"{% endif %}
+   {% for key, value in data.items() %}data-{{ key }}="{{ value }}"{% endfor %}>
+    {% if icon %}<i class="fas {{ icon }}" aria-hidden="true"></i> {% endif %}{{ text }}
+</a>
+{% else %}
+<button type="{{ type }}" class="{{ btn_class }}" {% if disabled %}disabled{% endif %}
+        {% for key, value in data.items() %}data-{{ key }}="{{ value }}"{% endfor %}>
+    {% if icon %}<i class="fas {{ icon }}" aria-hidden="true"></i> {% endif %}{{ text }}
+</button>
+{% endif %}
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Icon
+   Renders a Font Awesome icon
+
+   Usage:
+     {{ icon('fa-check') }}
+     {{ icon('fa-spinner', spin=True) }}
+   -------------------------------------------------------------------------- #}
+{% macro icon(name, spin=False, class='') %}
+<i class="fas {{ name }}{% if spin %} fa-spin{% endif %}{% if class %} {{ class }}{% endif %}" aria-hidden="true"></i>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Loading Spinner
+   Renders a loading spinner with optional text
+
+   Usage:
+     {{ spinner() }}
+     {{ spinner('Loading files...') }}
+   -------------------------------------------------------------------------- #}
+{% macro spinner(text=None, size='') %}
+<div class="loading-spinner {% if size %}spinner-{{ size }}{% endif %}">
+    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+    {% if text %}<span class="spinner-text">{{ text }}</span>{% endif %}
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Skeleton Loader
+   Renders skeleton loading placeholders
+
+   Usage:
+     {{ skeleton_text(lines=3) }}
+     {{ skeleton_card() }}
+   -------------------------------------------------------------------------- #}
+{% macro skeleton_text(lines=1, width='100%') %}
+{% for i in range(lines) %}
+<div class="skeleton skeleton-text" style="width: {{ width if loop.last else '100%' }};"></div>
+{% endfor %}
+{% endmacro %}
+
+{% macro skeleton_avatar(size='md') %}
+<div class="skeleton skeleton-avatar skeleton-avatar-{{ size }}"></div>
+{% endmacro %}
+
+{% macro skeleton_card() %}
+<div class="skeleton-card">
+    <div class="skeleton skeleton-image"></div>
+    <div class="skeleton-card-body">
+        {{ skeleton_text(lines=2, width='60%') }}
+    </div>
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Tooltip Wrapper
+   Wraps content with tooltip functionality
+
+   Usage:
+     {% call tooltip('Click to copy') %}
+       <button>Copy</button>
+     {% endcall %}
+   -------------------------------------------------------------------------- #}
+{% macro tooltip(text, position='top') %}
+<span class="tooltip-wrapper" data-tooltip="{{ text }}" data-tooltip-position="{{ position }}">
+    {{ caller() }}
+</span>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Badge
+   Renders a badge/pill component
+
+   Usage:
+     {{ badge('New', variant='primary') }}
+     {{ badge('5', variant='danger', pill=True) }}
+   -------------------------------------------------------------------------- #}
+{% macro badge(text, variant='secondary', pill=False) %}
+<span class="badge badge-{{ variant }}{% if pill %} badge-pill{% endif %}">{{ text }}</span>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Alert
+   Renders an alert message
+
+   Usage:
+     {{ alert('Success!', variant='success', dismissible=True) }}
+   -------------------------------------------------------------------------- #}
+{% macro alert(message, variant='info', icon=None, dismissible=False) %}
+<div class="alert alert-{{ variant }}{% if dismissible %} alert-dismissible fade show{% endif %}" role="alert">
+    {% if icon %}
+    <i class="fas {{ icon }}" aria-hidden="true"></i>
+    {% elif variant == 'success' %}
+    <i class="fas fa-check-circle" aria-hidden="true"></i>
+    {% elif variant == 'danger' or variant == 'error' %}
+    <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+    {% elif variant == 'warning' %}
+    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+    {% else %}
+    <i class="fas fa-info-circle" aria-hidden="true"></i>
+    {% endif %}
+    {{ message }}
+    {% if dismissible %}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Progress Bar
+   Renders a progress bar
+
+   Usage:
+     {{ progress_bar(75, variant='success', show_label=True) }}
+   -------------------------------------------------------------------------- #}
+{% macro progress_bar(value, max=100, variant='primary', show_label=False, striped=False, animated=False) %}
+{% set percentage = (value / max * 100)|round|int %}
+<div class="progress">
+    <div class="progress-bar bg-{{ variant }}{% if striped %} progress-bar-striped{% endif %}{% if animated %} progress-bar-animated{% endif %}"
+         role="progressbar"
+         style="width: {{ percentage }}%;"
+         aria-valuenow="{{ value }}"
+         aria-valuemin="0"
+         aria-valuemax="{{ max }}">
+        {% if show_label %}{{ percentage }}%{% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Nav Link
+   Renders a navigation link with active state
+
+   Usage:
+     {{ nav_link('Files', url_for('upload_file'), 'fa-folder-open', active_page, 'files') }}
+   -------------------------------------------------------------------------- #}
+{% macro nav_link(text, url, icon, active_page, page_id, class='nav-link') %}
+<a href="{{ url }}" class="{{ class }}{% if active_page == page_id %} is-active{% endif %}">
+    {% if icon %}<i class="fas {{ icon }} nav-icon" aria-hidden="true"></i>{% endif %}
+    <span>{{ text }}</span>
+</a>
+{% endmacro %}
+
+{# --------------------------------------------------------------------------
+   Confirmation Modal Trigger
+   Creates a button that triggers the confirmation modal
+
+   Usage:
+     {{ confirm_button('Delete', 'fa-trash', variant='danger',
+                       confirm_title='Delete File?',
+                       confirm_message='This cannot be undone.',
+                       data={'filename': file.name}) }}
+   -------------------------------------------------------------------------- #}
+{% macro confirm_button(text, icon=None, variant='danger', size='sm', confirm_title='Confirm', confirm_message='Are you sure?', confirm_text='Confirm', data={}) %}
+<button type="button"
+        class="btn btn-{{ variant }} btn-{{ size }} confirm-trigger"
+        data-confirm-title="{{ confirm_title }}"
+        data-confirm-message="{{ confirm_message }}"
+        data-confirm-text="{{ confirm_text }}"
+        {% for key, value in data.items() %}data-{{ key }}="{{ value }}"{% endfor %}>
+    {% if icon %}<i class="fas {{ icon }}" aria-hidden="true"></i> {% endif %}{{ text }}
+</button>
+{% endmacro %}
