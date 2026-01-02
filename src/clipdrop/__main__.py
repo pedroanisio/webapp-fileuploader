@@ -1,9 +1,9 @@
 """
-Entry point for running the application via `python -m fileuploader`.
+Entry point for running the application via `python -m clipdrop`.
 """
 
 import os
-from fileuploader.app import create_app
+from clipdrop.app import create_app
 
 
 def main():

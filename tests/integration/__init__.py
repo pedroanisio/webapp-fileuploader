@@ -1,1 +1,1 @@
-"""Integration tests for fileuploader."""
+"""Integration tests for clipdrop."""

@@ -1,7 +1,7 @@
 services:
   web:
     build: .
-    command: python -m fileuploader
+    command: python -m clipdrop
     volumes:
       - ./src:/app/src
       - ./uploads:/app/uploads

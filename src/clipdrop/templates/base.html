@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>{% block title %}File Uploader{% endblock %}</title>
+    <title>{% block title %}ClipDrop{% endblock %}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
@@ -22,7 +22,7 @@
             <div class="navbar-container container">
                 <a href="{{ url_for('upload_file') }}" class="navbar-brand">
                     <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
-                    <span>File Uploader</span>
+                    <span>ClipDrop</span>
                 </a>
                 {% if current_user.is_authenticated %}
                 <ul class="nav nav-desktop">
@@ -75,7 +75,7 @@
     <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
         <div class="mobile-nav-header">
             <span class="navbar-brand">
-                <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i> File Uploader
+                <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i> ClipDrop
             </span>
             <button class="btn-ghost btn-icon" aria-label="Close menu" id="mobile-nav-close">
                 <i class="fas fa-times" aria-hidden="true"></i>

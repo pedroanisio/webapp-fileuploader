@@ -4,7 +4,7 @@ from datetime import datetime
 
 from flask_login import UserMixin
 
-from fileuploader.extensions import db
+from clipdrop.extensions import db
 
 
 class User(UserMixin, db.Model):

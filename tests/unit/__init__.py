@@ -1,1 +1,1 @@
-"""Unit tests for fileuploader."""
+"""Unit tests for clipdrop."""

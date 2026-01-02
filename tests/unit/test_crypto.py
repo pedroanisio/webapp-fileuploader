@@ -2,7 +2,7 @@
 
 import pytest
 
-from fileuploader.crypto import (
+from clipdrop.crypto import (
     KEY_SIZE,
     decrypt_data,
     encrypt_data,

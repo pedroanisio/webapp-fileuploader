@@ -1,1 +1,1 @@
-"""Tests for the fileuploader package."""
+"""Tests for the clipdrop package."""

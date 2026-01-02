@@ -24,4 +24,4 @@ RUN mkdir -p uploads clipboard
 EXPOSE 3010
 
 # Run the application with gunicorn
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:3010", "fileuploader.app:create_app()"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:3010", "clipdrop.app:create_app()"]

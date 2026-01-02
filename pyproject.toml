@@ -3,16 +3,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "fileuploader"
+name = "clipdrop"
 version = "1.0.0"
 description = "A Flask-based web application for secure file uploads and clipboard sharing"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    { name = "File Uploader Team" }
+    { name = "ClipDrop Team" }
 ]
-keywords = ["flask", "file-upload", "clipboard", "web-application"]
+keywords = ["flask", "file-upload", "clipboard", "web-application", "clipdrop"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Web Environment",
@@ -48,15 +48,15 @@ dev = [
 ]
 
 [project.scripts]
-fileuploader = "fileuploader.__main__:main"
+clipdrop = "clipdrop.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/pedroanisio/fileuploader"
-Repository = "https://github.com/pedroanisio/fileuploader"
-Issues = "https://github.com/pedroanisio/fileuploader/issues"
+Homepage = "https://github.com/pedroanisio/clipdrop"
+Repository = "https://github.com/pedroanisio/clipdrop"
+Issues = "https://github.com/pedroanisio/clipdrop/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/fileuploader"]
+packages = ["src/clipdrop"]
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -91,7 +91,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["fileuploader"]
+known-first-party = ["clipdrop"]
 
 [tool.mypy]
 python_version = "3.10"

@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-from fileuploader.app import create_app
+from clipdrop.app import create_app
 
 
 @pytest.fixture

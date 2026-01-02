@@ -1,7 +1,7 @@
 services:
   web:
     build: .
-    command: gunicorn -w 4 -b 0.0.0.0:3000 "fileuploader.app:create_app()"
+    command: gunicorn -w 4 -b 0.0.0.0:3000 "clipdrop.app:create_app()"
     volumes:
       - ./src:/app/src
       - ./uploads:/app/uploads
