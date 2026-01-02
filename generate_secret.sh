@@ -10,10 +10,21 @@ fi
 SECRET_KEY=$(python3 -c "import os; print(os.urandom(24).hex())")
 
 # Add or update the SECRET_KEY in the .env file
-if grep -q "SECRET_KEY" .env; then
+if grep -q "^SECRET_KEY=" .env; then
     sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$SECRET_KEY/" .env
 else
     echo "SECRET_KEY=$SECRET_KEY" >> .env
 fi
 
-echo ".env file has been updated with a new SECRET_KEY."
+# Generate encryption key for data-at-rest protection (AES-256)
+ENCRYPTION_KEY=$(python3 -c "import os, base64; print(base64.b64encode(os.urandom(32)).decode())")
+
+# Add or update the ENCRYPTION_KEY in the .env file
+if grep -q "^ENCRYPTION_KEY=" .env; then
+    sed -i "s/^ENCRYPTION_KEY=.*/ENCRYPTION_KEY=$ENCRYPTION_KEY/" .env
+else
+    echo "ENCRYPTION_KEY=$ENCRYPTION_KEY" >> .env
+fi
+
+echo ".env file has been updated with SECRET_KEY and ENCRYPTION_KEY."
+echo "IMPORTANT: Back up your ENCRYPTION_KEY securely. Loss of this key means encrypted files cannot be recovered."

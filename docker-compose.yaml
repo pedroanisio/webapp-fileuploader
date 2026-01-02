@@ -8,6 +8,8 @@ services:
       - "3020:3000"
     environment:
       - FLASK_ENV=production
+    env_file:
+      - .env
     networks:
       - app-network
 

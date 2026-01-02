@@ -29,6 +29,14 @@ File and Clipboard Manager is a web application that allows users to upload file
 ### Environment Variables
 
 Create a `.env` file in the project root directory with the following content:
+```
+SECRET_KEY=your-unique-secret
+```
+
+You can generate a secret key automatically:
+```sh
+./generate_secret.sh
+```
 
 
 ### Installation
@@ -49,6 +57,8 @@ Create a `.env` file in the project root directory with the following content:
     docker build -t file-upload-app .
     docker run -p 3010:3010 file-upload-app
     ```
+
+   If you use `docker-compose`, run `./generate_secret.sh` first so `.env` exists for the container.
 
 ### Usage
 
