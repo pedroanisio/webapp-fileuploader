@@ -321,6 +321,33 @@ h6 {
   gap: var(--space-2);
 }
 
+.nav-action-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.nav-action-btn:hover {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.nav-desktop-only {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .nav-desktop-only {
+    display: inline-flex;
+  }
+}
+
 .user-pill {
   display: inline-flex;
   align-items: center;
@@ -450,6 +477,21 @@ h6 {
 
 .mobile-nav-link.is-active .mobile-nav-icon {
   color: var(--color-primary);
+}
+
+button.mobile-nav-link {
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.mobile-nav-divider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: var(--space-3) var(--space-4);
 }
 
 /* Bottom Navigation (Mobile) */
@@ -2628,4 +2670,151 @@ h6 {
     var(--color-border-light) 80%,
     transparent 100%
   );
+}
+
+/* ========================================
+   KEYBOARD SHORTCUTS MODAL
+   ======================================== */
+
+.shortcuts-modal {
+  display: none;
+}
+
+.shortcuts-modal.is-visible {
+  display: block;
+}
+
+.shortcuts-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-modal-backdrop);
+  animation: fadeIn var(--duration-fast) var(--easing-out);
+}
+
+.shortcuts-modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 420px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  z-index: var(--z-modal);
+  animation: scaleIn var(--duration-normal) var(--easing-out);
+  overflow: hidden;
+}
+
+.shortcuts-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-bg-secondary);
+}
+
+.shortcuts-modal-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.shortcuts-modal-header h3 i {
+  color: var(--color-primary);
+}
+
+.shortcuts-close {
+  background: none;
+  border: none;
+  font-size: var(--font-size-2xl);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: var(--space-1);
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast), background var(--duration-fast);
+}
+
+.shortcuts-close:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-tertiary);
+}
+
+.shortcuts-modal-body {
+  padding: var(--space-5);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.shortcuts-section {
+  margin-bottom: var(--space-5);
+}
+
+.shortcuts-section:last-child {
+  margin-bottom: 0;
+}
+
+.shortcuts-section h4 {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--space-3) 0;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+}
+
+.shortcut-item + .shortcut-item {
+  border-top: 1px solid var(--color-border-light);
+}
+
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.shortcut-keys kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 var(--space-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 0 var(--color-border-default);
+}
+
+.shortcut-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+/* Hide keyboard hint on mobile */
+@media (max-width: 767px) {
+  .shortcuts-modal-content {
+    max-width: none;
+    width: calc(100% - var(--space-8));
+  }
 }

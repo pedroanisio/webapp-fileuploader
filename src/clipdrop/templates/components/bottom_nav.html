@@ -5,13 +5,13 @@
 
 {% if current_user.is_authenticated %}
 <nav class="bottom-nav" aria-label="Mobile navigation">
-    <a href="{{ url_for('upload_file') }}" class="bottom-nav-item {% if active_page == 'files' %}is-active{% endif %}">
+    <a href="{{ url_for('upload_file') }}" class="bottom-nav-item {% if active_page == 'files' %}is-active{% endif %}" aria-current="{{ 'page' if active_page == 'files' else 'false' }}">
         <i class="fas fa-folder-open bottom-nav-icon" aria-hidden="true"></i>
-        <span>Files</span>
+        <span class="bottom-nav-label">Files</span>
     </a>
-    <a href="{{ url_for('shared_clipboard') }}" class="bottom-nav-item {% if active_page == 'clipboard' %}is-active{% endif %}">
+    <a href="{{ url_for('shared_clipboard') }}" class="bottom-nav-item {% if active_page == 'clipboard' %}is-active{% endif %}" aria-current="{{ 'page' if active_page == 'clipboard' else 'false' }}">
         <i class="fas fa-clipboard bottom-nav-icon" aria-hidden="true"></i>
-        <span>Clipboard</span>
+        <span class="bottom-nav-label">Clipboard</span>
     </a>
 </nav>
 {% endif %}
