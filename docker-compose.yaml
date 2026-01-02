@@ -12,28 +12,12 @@ services:
       - FLASK_ENV=production
       - UPLOAD_FOLDER=/app/uploads
       - CLIPBOARD_FOLDER=/app/clipboard
-      - DATABASE_URL=postgresql://clipdrop:clipdrop@db:5432/clipdrop
+      - DATABASE_URL=${DATABASE_URL}
     env_file:
       - .env
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - app-network
-
-  db:
-    image: postgres:16-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=clipdrop
-      - POSTGRES_PASSWORD=clipdrop
-      - POSTGRES_DB=clipdrop
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U clipdrop -d clipdrop"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
     networks:
       - app-network
 
