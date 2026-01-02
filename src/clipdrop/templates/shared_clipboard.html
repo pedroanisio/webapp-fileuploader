@@ -24,7 +24,7 @@
         <form id="folder-create-form" class="folder-create-form">
             <input type="text" name="name" id="folder-name" class="form-control form-control-sm"
                    placeholder="New folder name">
-            <input type="hidden" name="parent_id" value="{{ current_folder.id if current_folder }}">
+            <input type="hidden" name="parent_id" value="{{ current_folder.id if current_folder else '' }}">
             <button type="submit" class="btn btn-outline-primary btn-sm">
                 <i class="fas fa-folder-plus" aria-hidden="true"></i> Create
             </button>
@@ -60,7 +60,7 @@
 <div class="page-card mb-4">
     {{ section_header('Quick Paste', 'fa-paste') }}
     <form id="clipboard-form">
-        <input type="hidden" name="folder_id" value="{{ current_folder.id if current_folder }}">
+        <input type="hidden" name="folder_id" value="{{ current_folder.id if current_folder else '' }}">
         <div class="form-group">
             <label for="clipboard-text" class="sr-only">Text to save</label>
             <textarea id="clipboard-text" name="clipboard_data" class="form-control" rows="3"

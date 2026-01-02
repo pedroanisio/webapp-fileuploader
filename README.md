@@ -8,6 +8,8 @@ encrypted at rest and are cleaned up automatically every 24 hours.
 
 - Drag-and-drop file uploads with download/delete actions
 - Clipboard text and image capture with a dedicated viewer
+- Favorites, tags, and folder organization for clipboard items
+- Per-item retention control (keep beyond 24 hours)
 - GitHub OAuth sign-in (required to access the app)
 - AES-256-GCM encryption for files at rest (optional)
 - Automatic cleanup of files after 24 hours
@@ -114,6 +116,7 @@ docker compose -f docker-compose.dev.yml up --build
 - Sign in with GitHub OAuth.
 - Upload files via drag-and-drop or save clipboard text/images.
 - View, download, or delete uploaded items.
+- Favorite, tag, rename, and move clipboard items into folders.
 
 ### File Structure
 
