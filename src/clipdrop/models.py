@@ -2,14 +2,20 @@
 
 from datetime import datetime
 
+import ulid
+
 from flask_login import UserMixin
 
 from clipdrop.extensions import db
 
 
+def generate_ulid() -> str:
+    return str(ulid.new())
+
+
 clipboard_item_tags = db.Table(
     "clipboard_item_tags",
-    db.Column("item_id", db.Integer, db.ForeignKey("clipboard_item.id"), primary_key=True),
+    db.Column("item_id", db.String(26), db.ForeignKey("clipboard_item.id"), primary_key=True),
     db.Column("tag_id", db.Integer, db.ForeignKey("clipboard_tag.id"), primary_key=True),
 )
 
@@ -37,10 +43,10 @@ class OAuth(db.Model):
 class ClipboardFolder(db.Model):
     __table_args__ = (db.UniqueConstraint("user_id", "parent_id", "name"),)
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(26), primary_key=True, default=generate_ulid)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
     name = db.Column(db.String(255), nullable=False)
-    parent_id = db.Column(db.Integer, db.ForeignKey("clipboard_folder.id"))
+    parent_id = db.Column(db.String(26), db.ForeignKey("clipboard_folder.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
@@ -64,9 +70,9 @@ class ClipboardItem(db.Model):
         db.Index("ix_clipboard_item_user_favorite", "user_id", "favorite"),
     )
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(26), primary_key=True, default=generate_ulid)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
-    folder_id = db.Column(db.Integer, db.ForeignKey("clipboard_folder.id"))
+    folder_id = db.Column(db.String(26), db.ForeignKey("clipboard_folder.id"))
     name = db.Column(db.String(255), nullable=False)
     content = db.Column(db.LargeBinary, nullable=False)
     content_type = db.Column(db.String(255), nullable=False)

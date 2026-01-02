@@ -16,7 +16,6 @@ from flask import (
     Blueprint,
     Flask,
     flash,
-    jsonify,
     redirect,
     render_template,
     request,
@@ -29,8 +28,22 @@ from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy.exc import IntegrityError
 from werkzeug.utils import secure_filename
 
-from clipdrop.crypto import encrypt_data, load_key_from_env, safe_decrypt
+from clipdrop.crypto import load_key_from_env
 from clipdrop.extensions import db, login_manager
+from clipdrop.helpers import (
+    ALLOWED_EXTENSIONS,
+    MIMETYPE_MAP,
+    OAUTH_ERROR_MESSAGES,
+    allowed_file,
+    calculate_expiry,
+    decrypt_data_safe,
+    encrypt_data_safe,
+    get_file_extension,
+    get_oauth_error_message,
+    human_readable_size,
+    json_error,
+    json_success,
+)
 from clipdrop.models import ClipboardFolder, ClipboardItem, ClipboardTag, OAuth, User
 from clipdrop.storage import get_storage, init_storage
 
@@ -44,40 +57,6 @@ if os.getenv("FLASK_ENV") == "development" or os.getenv("OAUTHLIB_INSECURE_TRANS
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Constants
-ALLOWED_EXTENSIONS = {
-    "txt",
-    "pdf",
-    "png",
-    "jpg",
-    "jpeg",
-    "gif",
-    "pst",
-    "md",
-    "json",
-    "zip",
-    "tar",
-    "py",
-    "html",
-    "css",
-}
-
-MIMETYPE_MAP = {
-    "txt": "text/plain",
-    "pdf": "application/pdf",
-    "png": "image/png",
-    "jpg": "image/jpeg",
-    "jpeg": "image/jpeg",
-    "gif": "image/gif",
-    "json": "application/json",
-    "html": "text/html",
-    "css": "text/css",
-    "md": "text/markdown",
-    "py": "text/x-python",
-    "zip": "application/zip",
-    "tar": "application/x-tar",
-}
 
 # Global encryption key (loaded once)
 _encryption_key = None
@@ -167,13 +146,8 @@ def register_error_handlers(app):
     @app.errorhandler(OAuth2Error)
     def handle_oauth_error(error):
         """Handle OAuth2 errors gracefully."""
-        error_messages = {
-            "bad_verification_code": "The login code has expired. Please try signing in again.",
-            "access_denied": "GitHub access was denied. Please try again.",
-            "invalid_grant": "The authorization code has expired. Please try signing in again.",
-        }
         error_type = getattr(error, "error", str(error))
-        user_message = error_messages.get(error_type, f"Authentication failed. Please try again.")
+        user_message = get_oauth_error_message(error_type)
         logger.warning(f"OAuth2 error caught: {error}")
         flash(user_message, "danger")
         return redirect(url_for("auth.login"))
@@ -217,14 +191,8 @@ def register_auth(app):
     @oauth_error.connect_via(github_bp)
     def github_error(blueprint, message, response):
         """Handle OAuth errors gracefully."""
-        error_messages = {
-            "bad_verification_code": "The login code has expired. Please try signing in again.",
-            "access_denied": "GitHub access was denied. Please try again.",
-            "incorrect_client_credentials": "OAuth configuration error. Please contact the administrator.",
-        }
-        # Extract error type from message or response
         error_type = message if isinstance(message, str) else "unknown"
-        user_message = error_messages.get(error_type, f"GitHub authentication failed: {message}")
+        user_message = get_oauth_error_message(error_type)
         logger.warning(f"OAuth error: {message}")
         flash(user_message, "danger")
         return redirect(url_for("auth.login"))
@@ -331,7 +299,7 @@ def register_routes(app):
                 filename = f"{uuid.uuid4()}_{filename}"
                 try:
                     file_data = file.read()
-                    encrypted_data = encrypt_file_data(file_data)
+                    encrypted_data = encrypt_data_safe(file_data, get_encryption_key())
                     storage = get_storage()
                     storage.save(filename, encrypted_data, content_type=file.mimetype)
                     logger.info(
@@ -377,19 +345,19 @@ def register_routes(app):
         filename = secure_filename(filename)
         storage = get_storage()
         if not storage.exists(filename):
-            return jsonify({"status": "error", "message": "File not found"}), 404
+            return json_error("File not found", 404)
 
         try:
             encrypted_data = storage.read(filename)
-            data = decrypt_file_data(encrypted_data)
+            data = decrypt_data_safe(encrypted_data, get_encryption_key())
             ext = get_file_extension(filename)
             mimetype = MIMETYPE_MAP.get(ext, "application/octet-stream")
             return send_file(BytesIO(data), mimetype=mimetype, download_name=filename)
         except Exception as e:
             logger.error(f"Failed to serve file {filename}: {e}")
-            return jsonify({"status": "error", "message": "Failed to read file"}), 500
+            return json_error("Failed to read file", 500)
 
-    @app.route("/clipboard/<int:item_id>")
+    @app.route("/clipboard/<item_id>")
     @login_required
     def clipboard_file(item_id):
         """View clipboard content."""
@@ -407,16 +375,16 @@ def register_routes(app):
             active_page="clipboard",
         )
 
-    @app.route("/clipboard/<int:item_id>/raw")
+    @app.route("/clipboard/<item_id>/raw")
     @login_required
     def clipboard_file_raw(item_id):
         """Serve raw clipboard content for download."""
         item = ClipboardItem.query.filter_by(id=item_id, user_id=current_user.id).first()
         if not item:
-            return jsonify({"status": "error", "message": "Item not found"}), 404
+            return json_error("Item not found", 404)
 
         try:
-            data = decrypt_clipboard_data(item.content)
+            data = decrypt_data_safe(item.content, get_encryption_key())
             return send_file(
                 BytesIO(data),
                 mimetype=item.content_type or "application/octet-stream",
@@ -424,12 +392,12 @@ def register_routes(app):
             )
         except Exception as e:
             logger.error(f"Failed to serve clipboard item {item_id}: {e}")
-            return jsonify({"status": "error", "message": "Failed to read item"}), 500
+            return json_error("Failed to read item", 500)
 
     @app.route("/shared-clipboard")
     @login_required
     def shared_clipboard():
-        folder_id = request.args.get("folder_id", type=int)
+        folder_id = request.args.get("folder_id") or None
         current_folder = None
         breadcrumbs = []
         if folder_id:
@@ -464,23 +432,23 @@ def register_routes(app):
     @app.route("/clipboard", methods=["POST"])
     @login_required
     def clipboard():
-        folder_id = request.form.get("folder_id", type=int)
+        folder_id = request.form.get("folder_id") or None
         if folder_id:
             folder = ClipboardFolder.query.filter_by(
                 id=folder_id, user_id=current_user.id
             ).first()
             if not folder:
-                return jsonify({"status": "error", "message": "Folder not found"}), 404
+                return json_error("Folder not found", 404)
 
         tags = parse_tag_names(request.form.get("tags", ""))
         favorite = request.form.get("favorite") == "on"
         keep = request.form.get("keep") == "on"
-        expires_at = None if keep else datetime.utcnow() + timedelta(days=1)
+        expires_at = calculate_expiry(keep)
 
         if "image" in request.files and request.files["image"].filename:
             file = request.files["image"]
             if not allowed_file(file.filename):
-                return jsonify({"status": "error", "message": "File type not allowed"}), 400
+                return json_error("File type not allowed", 400)
             filename = secure_filename(file.filename)
             name = f"clipboard_{uuid.uuid4()}_{filename}" if filename else f"clipboard_{uuid.uuid4()}"
             raw_data = file.read()
@@ -489,7 +457,7 @@ def register_routes(app):
         else:
             data = request.form.get("clipboard_data", "").strip()
             if not data:
-                return jsonify({"status": "error", "message": "Clipboard text is required"}), 400
+                return json_error("Clipboard text is required", 400)
             raw_data = data.encode("utf-8")
             name = f"clipboard_{uuid.uuid4()}.txt"
             content_type = "text/plain"
@@ -499,7 +467,7 @@ def register_routes(app):
             user_id=current_user.id,
             folder_id=folder_id,
             name=name,
-            content=encrypt_clipboard_data(raw_data),
+            content=encrypt_data_safe(raw_data, get_encryption_key()),
             content_type=content_type,
             is_text=is_text,
             size=len(raw_data),
@@ -509,9 +477,9 @@ def register_routes(app):
         item.tags = get_or_create_tags(tags, current_user.id)
         db.session.add(item)
         db.session.commit()
-        return jsonify({"status": "success", "message": "Saved", "id": item.id})
+        return json_success("Saved", id=item.id)
 
-    @app.route("/clipboard/<int:item_id>/edit", methods=["GET", "POST"])
+    @app.route("/clipboard/<item_id>/edit", methods=["GET", "POST"])
     @login_required
     def edit_clipboard_item(item_id):
         item = ClipboardItem.query.filter_by(id=item_id, user_id=current_user.id).first()
@@ -522,7 +490,7 @@ def register_routes(app):
         if request.method == "POST":
             name = request.form.get("name", "").strip()
             name = normalize_clipboard_name(name, item.name, item.is_text)
-            folder_id = request.form.get("folder_id", type=int)
+            folder_id = request.form.get("folder_id") or None
             if folder_id:
                 folder = ClipboardFolder.query.filter_by(
                     id=folder_id, user_id=current_user.id
@@ -538,13 +506,13 @@ def register_routes(app):
             if item.is_text:
                 content_text = request.form.get("content", "")
                 raw_data = content_text.encode("utf-8")
-                item.content = encrypt_clipboard_data(raw_data)
+                item.content = encrypt_data_safe(raw_data, get_encryption_key())
                 item.size = len(raw_data)
 
             item.name = name
             item.folder_id = folder_id
             item.favorite = favorite
-            item.expires_at = None if keep else datetime.utcnow() + timedelta(days=1)
+            item.expires_at = calculate_expiry(keep)
             item.tags = get_or_create_tags(tags, current_user.id)
 
             db.session.commit()
@@ -553,7 +521,9 @@ def register_routes(app):
 
         content_text = ""
         if item.is_text:
-            content_text = decrypt_clipboard_data(item.content).decode("utf-8", errors="replace")
+            content_text = decrypt_data_safe(item.content, get_encryption_key()).decode(
+                "utf-8", errors="replace"
+            )
 
         return render_template(
             "clipboard_edit.html",
@@ -573,63 +543,63 @@ def register_routes(app):
             try:
                 storage.delete(filename)
                 logger.info(f"File {filename} deleted by user")
-                return jsonify({"status": "success", "message": "File deleted"})
+                return json_success("File deleted")
             except Exception as e:
                 logger.error(f"Failed to delete file {filename}: {e}")
-                return jsonify({"status": "error", "message": "Failed to delete file"}), 500
-        return jsonify({"status": "error", "message": "File not found"}), 404
+                return json_error("Failed to delete file", 500)
+        return json_error("File not found", 404)
 
-    @app.route("/clipboard/<int:item_id>/delete", methods=["POST"])
+    @app.route("/clipboard/<item_id>/delete", methods=["POST"])
     @login_required
     def delete_clipboard_item(item_id):
         item = ClipboardItem.query.filter_by(id=item_id, user_id=current_user.id).first()
         if not item:
-            return jsonify({"status": "error", "message": "Clipboard item not found"}), 404
+            return json_error("Clipboard item not found", 404)
         db.session.delete(item)
         db.session.commit()
-        return jsonify({"status": "success", "message": "Clipboard item deleted"})
+        return json_success("Clipboard item deleted")
 
-    @app.route("/clipboard/<int:item_id>/favorite", methods=["POST"])
+    @app.route("/clipboard/<item_id>/favorite", methods=["POST"])
     @login_required
     def toggle_clipboard_favorite(item_id):
         item = ClipboardItem.query.filter_by(id=item_id, user_id=current_user.id).first()
         if not item:
-            return jsonify({"status": "error", "message": "Clipboard item not found"}), 404
+            return json_error("Clipboard item not found", 404)
         payload = request.get_json(silent=True) or {}
         favorite = payload.get("favorite")
         if favorite is None:
             favorite = not item.favorite
         item.favorite = bool(favorite)
         db.session.commit()
-        return jsonify({"status": "success", "favorite": item.favorite})
+        return json_success("Updated", favorite=item.favorite)
 
-    @app.route("/clipboard/<int:item_id>/retention", methods=["POST"])
+    @app.route("/clipboard/<item_id>/retention", methods=["POST"])
     @login_required
     def toggle_clipboard_retention(item_id):
         item = ClipboardItem.query.filter_by(id=item_id, user_id=current_user.id).first()
         if not item:
-            return jsonify({"status": "error", "message": "Clipboard item not found"}), 404
+            return json_error("Clipboard item not found", 404)
         payload = request.get_json(silent=True) or {}
         keep = payload.get("keep")
         if keep is None:
             keep = item.expires_at is not None
-        item.expires_at = None if keep else datetime.utcnow() + timedelta(days=1)
+        item.expires_at = calculate_expiry(keep=not keep) if not keep else None
         db.session.commit()
-        return jsonify({"status": "success", "kept": item.expires_at is None})
+        return json_success("Updated", kept=item.expires_at is None)
 
     @app.route("/clipboard/folders", methods=["POST"])
     @login_required
     def create_clipboard_folder():
         name = request.form.get("name", "").strip()
         if not name:
-            return jsonify({"status": "error", "message": "Folder name is required"}), 400
-        parent_id = request.form.get("parent_id", type=int)
+            return json_error("Folder name is required", 400)
+        parent_id = request.form.get("parent_id") or None
         if parent_id:
             parent = ClipboardFolder.query.filter_by(
                 id=parent_id, user_id=current_user.id
             ).first()
             if not parent:
-                return jsonify({"status": "error", "message": "Parent folder not found"}), 404
+                return json_error("Parent folder not found", 404)
 
         folder = ClipboardFolder(user_id=current_user.id, name=name, parent_id=parent_id)
         db.session.add(folder)
@@ -637,44 +607,38 @@ def register_routes(app):
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
-            return jsonify(
-                {"status": "error", "message": "Folder name already exists"}
-            ), 400
-        return jsonify({"status": "success", "id": folder.id})
+            return json_error("Folder name already exists", 400)
+        return json_success("Created", id=folder.id)
 
-    @app.route("/clipboard/folders/<int:folder_id>/rename", methods=["POST"])
+    @app.route("/clipboard/folders/<folder_id>/rename", methods=["POST"])
     @login_required
     def rename_clipboard_folder(folder_id):
         folder = ClipboardFolder.query.filter_by(id=folder_id, user_id=current_user.id).first()
         if not folder:
-            return jsonify({"status": "error", "message": "Folder not found"}), 404
+            return json_error("Folder not found", 404)
         payload = request.get_json(silent=True) or {}
         name = (payload.get("name") or "").strip()
         if not name:
-            return jsonify({"status": "error", "message": "Folder name is required"}), 400
+            return json_error("Folder name is required", 400)
         folder.name = name
         try:
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
-            return jsonify(
-                {"status": "error", "message": "Folder name already exists"}
-            ), 400
-        return jsonify({"status": "success", "name": folder.name})
+            return json_error("Folder name already exists", 400)
+        return json_success("Renamed", name=folder.name)
 
-    @app.route("/clipboard/folders/<int:folder_id>/delete", methods=["POST"])
+    @app.route("/clipboard/folders/<folder_id>/delete", methods=["POST"])
     @login_required
     def delete_clipboard_folder(folder_id):
         folder = ClipboardFolder.query.filter_by(id=folder_id, user_id=current_user.id).first()
         if not folder:
-            return jsonify({"status": "error", "message": "Folder not found"}), 404
+            return json_error("Folder not found", 404)
         if folder.children or folder.items:
-            return jsonify(
-                {"status": "error", "message": "Folder is not empty"}
-            ), 400
+            return json_error("Folder is not empty", 400)
         db.session.delete(folder)
         db.session.commit()
-        return jsonify({"status": "success"})
+        return json_success("Deleted")
 
 
 def setup_scheduler(app):
@@ -721,66 +685,11 @@ def wants_json_response():
 def respond_upload(message, category, status, redirect_url):
     """Respond to upload requests with either JSON or redirect."""
     if wants_json_response():
-        payload = {
-            "status": "success" if status < 400 else "error",
-            "message": message,
-        }
-        return jsonify(payload), status
+        if status < 400:
+            return json_success(message), status
+        return json_error(message, status)
     flash(message, category)
     return redirect(redirect_url)
-
-
-def allowed_file(filename):
-    """Check if a file extension is allowed."""
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def human_readable_size(size_bytes):
-    """Convert bytes to human readable format."""
-    for unit in ["B", "KB", "MB", "GB", "TB"]:
-        if size_bytes < 1024.0:
-            return f"{size_bytes:.1f} {unit}"
-        size_bytes /= 1024.0
-    return f"{size_bytes:.1f} PB"
-
-
-def get_file_extension(filename):
-    """Get file extension from filename."""
-    if "." in filename:
-        return filename.rsplit(".", 1)[1].lower()
-    return ""
-
-
-def encrypt_file_data(data: bytes) -> bytes:
-    """Encrypt file data if encryption key is available."""
-    key = get_encryption_key()
-    if key:
-        return encrypt_data(data, key)
-    return data
-
-
-def decrypt_file_data(data: bytes) -> bytes:
-    """Decrypt file data if encrypted."""
-    key = get_encryption_key()
-    if key:
-        data, _ = safe_decrypt(data, key)
-    return data
-
-
-def encrypt_clipboard_data(data: bytes) -> bytes:
-    """Encrypt clipboard content if an encryption key is available."""
-    key = get_encryption_key()
-    if key:
-        return encrypt_data(data, key)
-    return data
-
-
-def decrypt_clipboard_data(data: bytes) -> bytes:
-    """Decrypt clipboard content if encrypted; return raw data otherwise."""
-    key = get_encryption_key()
-    if key:
-        data, _ = safe_decrypt(data, key)
-    return data
 
 
 def parse_tag_names(raw_tags: str) -> list[str]:
@@ -837,7 +746,7 @@ def get_or_create_tags(tag_names: list[str], user_id: int) -> list[ClipboardTag]
 def build_folder_options(user_id: int) -> list[dict]:
     """Build a list of folder options with indentation for select inputs."""
     folders = ClipboardFolder.query.filter_by(user_id=user_id).all()
-    children_map: dict[int | None, list[ClipboardFolder]] = defaultdict(list)
+    children_map: dict[str | None, list[ClipboardFolder]] = defaultdict(list)
     for folder in folders:
         children_map[folder.parent_id].append(folder)
     for child_list in children_map.values():
@@ -845,7 +754,7 @@ def build_folder_options(user_id: int) -> list[dict]:
 
     options = []
 
-    def walk(parent_id: int | None, depth: int) -> None:
+    def walk(parent_id: str | None, depth: int) -> None:
         for folder in children_map.get(parent_id, []):
             label = f"{'-' * depth} {folder.name}" if depth else folder.name
             options.append({"id": folder.id, "label": label})
@@ -869,7 +778,7 @@ def serialize_clipboard_item(item: ClipboardItem) -> dict:
     """Serialize clipboard item for template rendering."""
     content_text = ""
     if item.is_text:
-        raw = decrypt_clipboard_data(item.content)
+        raw = decrypt_data_safe(item.content, get_encryption_key())
         content_text = raw.decode("utf-8", errors="replace")
     return {
         "id": item.id,
@@ -890,8 +799,6 @@ def serialize_clipboard_item(item: ClipboardItem) -> dict:
 
 def get_file_properties(storage_file):
     """Get properties of a file from StorageFile object."""
-    from clipdrop.storage import StorageFile
-
     filename = storage_file.key
     file_size = storage_file.size
     file_creation_time = storage_file.last_modified
@@ -900,7 +807,7 @@ def get_file_properties(storage_file):
         try:
             storage = get_storage()
             encrypted_data = storage.read(filename)
-            data = decrypt_file_data(encrypted_data)
+            data = decrypt_data_safe(encrypted_data, get_encryption_key())
             content = data.decode("utf-8")
         except (IOError, UnicodeDecodeError, Exception):
             content = "[Unable to read file content]"
