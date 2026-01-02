@@ -4,12 +4,14 @@ FROM python:3.12-slim
 # Set the working directory
 WORKDIR /app
 
-# Copy pyproject.toml and install dependencies
-COPY pyproject.toml .
+# Copy files needed for installation
+COPY pyproject.toml README.md ./
+COPY src/ src/
+
+# Install dependencies
 RUN pip install --no-cache-dir .
 
-# Copy the source code
-COPY src/ src/
+# Copy scripts
 COPY scripts/ scripts/
 
 # Copy and run the script to generate the .env file if it doesn't exist
