@@ -4,6 +4,11 @@ FROM python:3.12-slim
 # Set the working directory
 WORKDIR /app
 
+# Install system dependencies required for psycopg2
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy files needed for installation
 COPY pyproject.toml README.md ./
 COPY src/ src/
