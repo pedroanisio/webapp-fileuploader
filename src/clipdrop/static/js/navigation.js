@@ -61,4 +61,57 @@
         toggle: toggleMobileNav,
         close: closeMobileNav
     };
+
+    /**
+     * Action Dropdown Menu Handler
+     * Handles mobile action dropdown menus
+     */
+    function initActionDropdowns() {
+        document.addEventListener('click', function(e) {
+            const toggle = e.target.closest('.action-dropdown-toggle');
+            const dropdown = e.target.closest('.action-dropdown');
+
+            // Close all dropdowns if clicking outside
+            if (!dropdown) {
+                document.querySelectorAll('.action-dropdown.is-open').forEach(function(d) {
+                    d.classList.remove('is-open');
+                    d.querySelector('.action-dropdown-toggle').setAttribute('aria-expanded', 'false');
+                });
+                return;
+            }
+
+            // Toggle clicked dropdown
+            if (toggle) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const isOpen = dropdown.classList.contains('is-open');
+
+                // Close all other dropdowns first
+                document.querySelectorAll('.action-dropdown.is-open').forEach(function(d) {
+                    if (d !== dropdown) {
+                        d.classList.remove('is-open');
+                        d.querySelector('.action-dropdown-toggle').setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                // Toggle current dropdown
+                dropdown.classList.toggle('is-open');
+                toggle.setAttribute('aria-expanded', !isOpen);
+            }
+        });
+
+        // Close dropdowns on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.action-dropdown.is-open').forEach(function(d) {
+                    d.classList.remove('is-open');
+                    d.querySelector('.action-dropdown-toggle').setAttribute('aria-expanded', 'false');
+                });
+            }
+        });
+    }
+
+    // Initialize action dropdowns
+    initActionDropdowns();
 })();

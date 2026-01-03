@@ -65,15 +65,30 @@
                     <td>{{ file.creation_time.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td>
                         <div class="btn-group-actions">
+                            {# Primary actions - always visible #}
                             <a href="{{ url_for('uploaded_file', filename=file.name) }}" class="btn btn-info btn-sm" aria-label="Download {{ file.name }}">
                                 <i class="fas fa-download" aria-hidden="true"></i>
                             </a>
                             <button class="btn btn-success btn-sm share-btn" data-url="{{ url_for('uploaded_file', filename=file.name, _external=True) }}" aria-label="Share {{ file.name }}">
                                 <i class="fas fa-share-alt" aria-hidden="true"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm delete-btn" data-filename="{{ file.name }}" data-type="file" aria-label="Delete {{ file.name }}">
+
+                            {# Delete button - visible on desktop, in dropdown on mobile #}
+                            <button class="btn btn-danger btn-sm delete-btn mobile-hide" data-filename="{{ file.name }}" data-type="file" aria-label="Delete {{ file.name }}">
                                 <i class="fas fa-trash" aria-hidden="true"></i>
                             </button>
+
+                            {# Mobile dropdown for delete #}
+                            <div class="action-dropdown mobile-show">
+                                <button class="btn btn-sm action-dropdown-toggle" aria-label="More actions" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+                                </button>
+                                <div class="action-dropdown-menu">
+                                    <button class="action-dropdown-item text-danger delete-btn" data-filename="{{ file.name }}" data-type="file">
+                                        <i class="fas fa-trash" aria-hidden="true"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </td>
                 </tr>

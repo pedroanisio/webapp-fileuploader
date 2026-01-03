@@ -142,6 +142,7 @@
                     <td>{{ item.creation_time.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td>
                         <div class="btn-group-actions clipboard-actions">
+                            {# Primary actions - always visible #}
                             {% if item.is_text %}
                             <button class="btn btn-primary btn-sm copy-content-btn" data-content="{{ item.content | e }}"
                                     aria-label="Copy {{ item.name }}">
@@ -152,34 +153,66 @@
                                class="btn btn-outline-primary btn-sm" aria-label="View {{ item.name }}">
                                 <i class="fas fa-eye" aria-hidden="true"></i>
                             </a>
-                            <button class="btn btn-success btn-sm share-btn"
+
+                            {# Secondary actions - visible on desktop, hidden on mobile #}
+                            <button class="btn btn-success btn-sm share-btn mobile-hide"
                                     data-url="{{ url_for('clipboard_file', item_id=item.id, _external=True) }}"
                                     aria-label="Copy link">
                                 <i class="fas fa-link" aria-hidden="true"></i>
                             </button>
                             <a href="{{ url_for('clipboard_file_raw', item_id=item.id) }}"
-                               class="btn btn-info btn-sm" aria-label="Download" download>
+                               class="btn btn-info btn-sm mobile-hide" aria-label="Download" download>
                                 <i class="fas fa-download" aria-hidden="true"></i>
                             </a>
                             <a href="{{ url_for('edit_clipboard_item', item_id=item.id) }}"
-                               class="btn btn-outline-secondary btn-sm" aria-label="Edit {{ item.name }}">
+                               class="btn btn-outline-secondary btn-sm mobile-hide" aria-label="Edit {{ item.name }}">
                                 <i class="fas fa-pen" aria-hidden="true"></i>
                             </a>
-                            <button class="btn btn-outline-warning btn-sm favorite-toggle"
+                            <button class="btn btn-outline-warning btn-sm favorite-toggle mobile-hide"
                                     data-id="{{ item.id }}" data-favorite="{{ 'true' if item.favorite else 'false' }}"
                                     aria-label="Toggle favorite">
                                 <i class="{{ 'fas' if item.favorite else 'far' }} fa-star" aria-hidden="true"></i>
                             </button>
-                            <button class="btn btn-outline-secondary btn-sm retention-toggle"
+                            <button class="btn btn-outline-secondary btn-sm retention-toggle mobile-hide"
                                     data-id="{{ item.id }}" data-keep="{{ 'true' if item.kept else 'false' }}"
                                     aria-label="Toggle retention">
                                 <i class="fas {{ 'fa-infinity' if item.kept else 'fa-clock' }}" aria-hidden="true"></i>
                             </button>
-                            <button class="btn btn-danger btn-sm clipboard-delete-btn" data-id="{{ item.id }}"
+                            <button class="btn btn-danger btn-sm clipboard-delete-btn mobile-hide" data-id="{{ item.id }}"
                                     data-name="{{ item.name }}"
                                     aria-label="Delete">
                                 <i class="fas fa-trash" aria-hidden="true"></i>
                             </button>
+
+                            {# Mobile dropdown menu #}
+                            <div class="action-dropdown mobile-show">
+                                <button class="btn btn-sm action-dropdown-toggle" aria-label="More actions" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+                                </button>
+                                <div class="action-dropdown-menu">
+                                    <button class="action-dropdown-item share-btn" data-url="{{ url_for('clipboard_file', item_id=item.id, _external=True) }}">
+                                        <i class="fas fa-link" aria-hidden="true"></i> Copy Link
+                                    </button>
+                                    <a href="{{ url_for('clipboard_file_raw', item_id=item.id) }}" class="action-dropdown-item" download>
+                                        <i class="fas fa-download" aria-hidden="true"></i> Download
+                                    </a>
+                                    <a href="{{ url_for('edit_clipboard_item', item_id=item.id) }}" class="action-dropdown-item">
+                                        <i class="fas fa-pen" aria-hidden="true"></i> Edit
+                                    </a>
+                                    <button class="action-dropdown-item favorite-toggle" data-id="{{ item.id }}" data-favorite="{{ 'true' if item.favorite else 'false' }}">
+                                        <i class="{{ 'fas' if item.favorite else 'far' }} fa-star" aria-hidden="true"></i>
+                                        {{ 'Unfavorite' if item.favorite else 'Favorite' }}
+                                    </button>
+                                    <button class="action-dropdown-item retention-toggle" data-id="{{ item.id }}" data-keep="{{ 'true' if item.kept else 'false' }}">
+                                        <i class="fas {{ 'fa-infinity' if item.kept else 'fa-clock' }}" aria-hidden="true"></i>
+                                        {{ 'Set 24h expiry' if item.kept else 'Keep forever' }}
+                                    </button>
+                                    <div class="action-dropdown-divider"></div>
+                                    <button class="action-dropdown-item text-danger clipboard-delete-btn" data-id="{{ item.id }}" data-name="{{ item.name }}">
+                                        <i class="fas fa-trash" aria-hidden="true"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </td>
                 </tr>
