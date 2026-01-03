@@ -100,19 +100,15 @@ Generate secrets with:
 
 ### Docker
 
-Use the production compose file (runs gunicorn on port 3000, mapped to 3020 locally):
+Build and run the container:
 ```sh
-docker compose up --build
-```
-
-For development with the Flask server:
-```sh
-docker compose -f docker-compose.dev.yml up --build
+docker build -t clipdrop .
+docker run -p 3000:3000 --env-file .env clipdrop
 ```
 
 ### Usage
 
-- Open `http://localhost:3000` (or `http://localhost:3020` when using Docker).
+- Open `http://localhost:3000`.
 - Sign in with GitHub OAuth.
 - Upload files via drag-and-drop or save clipboard text/images.
 - View, download, or delete uploaded items.
@@ -128,48 +124,70 @@ clipdrop/
 │   ├── app.py
 │   ├── crypto.py
 │   ├── extensions.py
+│   ├── helpers.py
 │   ├── models.py
-│   ├── storage.py          # Storage abstraction (local/S3)
+│   ├── storage.py
 │   ├── static/
-│   │   └── styles.css
+│   │   ├── styles.css
+│   │   └── js/
+│   │       ├── clipboard.js
+│   │       ├── files.js
+│   │       ├── modal.js
+│   │       ├── navigation.js
+│   │       ├── theme.js
+│   │       └── toast.js
 │   └── templates/
 │       ├── base.html
 │       ├── index.html
 │       ├── login.html
 │       ├── clipboard_view.html
-│       └── shared_clipboard.html
-├── .do/
-│   └── app.yaml            # Digital Ocean App Platform spec
+│       ├── clipboard_edit.html
+│       ├── shared_clipboard.html
+│       ├── macros.html
+│       └── components/
+│           ├── bottom_nav.html
+│           ├── modal.html
+│           ├── navigation.html
+│           └── toast.html
 ├── tests/
-├── docs/
 ├── scripts/
 ├── pyproject.toml
-├── Dockerfile
-└── docker-compose.yaml
+└── Dockerfile
 ```
 
 ## Deployment
 
-### Digital Ocean App Platform
+### Dokploy + Digital Ocean Spaces
 
-The project includes a ready-to-use App Platform specification in `.do/app.yaml`.
+The application is deployed using [Dokploy](https://dokploy.com/) with Digital Ocean Spaces for file storage.
 
 **Prerequisites:**
-1. Create a Digital Ocean Space (for file storage)
+1. Create a Digital Ocean Space for file storage
 2. Generate Spaces access keys (API > Spaces Keys)
 3. Register a GitHub OAuth app with callback URL: `https://clipdrop.is42.io/login/github/authorized`
 
-**Deploy:**
-1. Push to GitHub
-2. In DO Console: Apps > Create App > Select your repo
-3. Configure environment variables (secrets) in the dashboard
-4. Deploy
+**Environment variables:**
+```
+SECRET_KEY=your-secret-key
+GITHUB_OAUTH_CLIENT_ID=your-client-id
+GITHUB_OAUTH_CLIENT_SECRET=your-client-secret
+DATABASE_URL=postgresql://user:pass@host:5432/clipdrop
+STORAGE_TYPE=s3
+SPACES_BUCKET=your-bucket
+SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com
+SPACES_REGION=nyc3
+SPACES_ACCESS_KEY=your-access-key
+SPACES_SECRET_KEY=your-secret-key
+```
 
-The app spec includes:
-- Managed PostgreSQL database
-- Spaces integration for persistent file storage
-- Health checks
-- Auto-deploy on push
+**Dokploy setup:**
+1. Create a new application in Dokploy
+2. Connect your GitHub repository
+3. Configure environment variables in the Dokploy dashboard
+4. Set the exposed port to `3000`
+5. Deploy
+
+The Dockerfile uses Gunicorn with 4 workers on port 3000.
 
 ### Contributing
 
