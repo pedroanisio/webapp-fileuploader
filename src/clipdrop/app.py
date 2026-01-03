@@ -51,8 +51,9 @@ from clipdrop.storage import get_storage, init_storage
 # Load environment variables
 load_dotenv()
 
-# Allow OAuth over HTTP for local development (disable in production)
-if os.getenv("FLASK_ENV") == "development" or os.getenv("OAUTHLIB_INSECURE_TRANSPORT"):
+# Allow OAuth over HTTP ONLY in explicit development mode
+# This prevents accidental insecure OAuth in production
+if os.getenv("FLASK_ENV") == "development" and os.getenv("FLASK_DEBUG", "").lower() in ("true", "1", "yes"):
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 # Configure logging
@@ -111,6 +112,12 @@ def create_app(config=None):
     app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER", "uploads")
     app.config["CLIPBOARD_FOLDER"] = os.getenv("CLIPBOARD_FOLDER", "clipboard")
     app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024 * 1024  # 10GB
+
+    # Session security configuration for production
+    is_production = os.getenv("FLASK_ENV") != "development"
+    app.config["SESSION_COOKIE_SECURE"] = is_production  # HTTPS only in production
+    app.config["SESSION_COOKIE_HTTPONLY"] = True  # Prevent JavaScript access
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
     # Fix for DigitalOcean and Heroku postgres:// URLs (SQLAlchemy 1.4+ requires postgresql://)
     database_url = os.getenv("DATABASE_URL", "sqlite:///clipdrop.db")
     if database_url.startswith("postgres://"):

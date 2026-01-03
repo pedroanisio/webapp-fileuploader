@@ -217,19 +217,23 @@ class S3Storage(StorageBackend):
 
     def delete(self, key: str) -> bool:
         """Delete a file from S3."""
+        from botocore.exceptions import BotoCoreError, ClientError
+
         try:
             self.client.delete_object(Bucket=self.bucket, Key=self._full_key(key))
             return True
-        except Exception as e:
+        except (BotoCoreError, ClientError) as e:
             logger.error(f"Failed to delete {key}: {e}")
             return False
 
     def exists(self, key: str) -> bool:
         """Check if a file exists in S3."""
+        from botocore.exceptions import BotoCoreError, ClientError
+
         try:
             self.client.head_object(Bucket=self.bucket, Key=self._full_key(key))
             return True
-        except Exception:
+        except (BotoCoreError, ClientError):
             return False
 
     def list_files(self, prefix: str = "") -> list[StorageFile]:
@@ -258,6 +262,8 @@ class S3Storage(StorageBackend):
 
     def get_file_info(self, key: str) -> StorageFile | None:
         """Get file metadata from S3."""
+        from botocore.exceptions import BotoCoreError, ClientError
+
         try:
             response = self.client.head_object(Bucket=self.bucket, Key=self._full_key(key))
             return StorageFile(
@@ -266,7 +272,7 @@ class S3Storage(StorageBackend):
                 last_modified=response["LastModified"],
                 content_type=response.get("ContentType"),
             )
-        except Exception:
+        except (BotoCoreError, ClientError):
             return None
 
 

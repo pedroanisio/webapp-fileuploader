@@ -1240,7 +1240,7 @@ button.mobile-nav-link {
 @media (max-width: 767px) {
   .navbar-container {
     height: 56px;
-    padding: 0 var(--space-4);
+    padding: 0 var(--space-3);
   }
 
   .nav-desktop {
@@ -1252,12 +1252,13 @@ button.mobile-nav-link {
   }
 
   .main-content {
-    padding: var(--space-4) 0 calc(70px + env(safe-area-inset-bottom));
-    margin-top: 60px;
+    padding: var(--space-4) 0 calc(80px + env(safe-area-inset-bottom));
+    margin-top: 56px;
   }
 
   .page-card {
     padding: var(--space-4);
+    border-radius: var(--radius-lg);
   }
 
   .user-name {
@@ -1268,42 +1269,204 @@ button.mobile-nav-link {
     padding: var(--space-1);
   }
 
+  /* Hide Sign out button on mobile - use mobile nav instead */
+  .nav-actions > a.btn-outline-primary {
+    display: none;
+  }
+
   .auth-button {
     width: 100%;
     justify-content: center;
   }
 
+  /* Improved filename display on mobile */
   .filename-cell {
-    max-width: 150px;
+    max-width: none;
   }
 
   .filename-truncate {
-    max-width: 120px;
+    max-width: none;
+    white-space: normal;
+    word-break: break-word;
+    display: block;
   }
 
+  /* Hide table columns on mobile for cleaner view */
   .table th:nth-child(4),
-  .table td:nth-child(4) {
-    display: none;
-  }
-
+  .table td:nth-child(4),
   .table th:nth-child(3),
   .table td:nth-child(3) {
     display: none;
   }
 
+  /* Mobile card-based layout for files and clipboard */
+  .files-table,
+  .clipboard-table {
+    display: block;
+  }
+
+  .files-table thead,
+  .clipboard-table thead {
+    display: none;
+  }
+
+  .files-table tbody,
+  .clipboard-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .files-table tr,
+  .clipboard-table tr {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border-light);
+    gap: var(--space-3);
+  }
+
+  .files-table td,
+  .clipboard-table td {
+    display: flex;
+    align-items: center;
+    padding: 0;
+    border: none;
+  }
+
+  /* Show all columns in mobile card view */
+  .files-table td:nth-child(3),
+  .files-table td:nth-child(4),
+  .clipboard-table td:nth-child(3),
+  .clipboard-table td:nth-child(4) {
+    display: flex;
+  }
+
+  /* File type icon styling in mobile card */
+  .files-table td:first-child,
+  .clipboard-table td:first-child {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    font-size: var(--font-size-xl);
+    color: var(--color-text-muted);
+  }
+
+  .files-table tr,
+  .clipboard-table tr {
+    position: relative;
+    padding-right: calc(var(--space-4) + 24px);
+  }
+
+  /* Filename styling in mobile card */
+  .files-table td:nth-child(2),
+  .clipboard-table td:nth-child(2) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .files-table .filename-cell {
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    max-width: 100%;
+  }
+
+  /* Size and date on same row in mobile */
+  .files-table td:nth-child(3)::before {
+    content: "Size: ";
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .files-table td:nth-child(4)::before {
+    content: "Created: ";
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  .files-table td:nth-child(3),
+  .files-table td:nth-child(4) {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+  }
+
+  /* Actions row in mobile card */
+  .files-table td:last-child,
+  .clipboard-table td:last-child {
+    margin-top: var(--space-2);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border-light);
+    justify-content: flex-start;
+  }
+
   .toast-container {
     top: auto;
     right: 50%;
-    bottom: var(--space-5);
+    bottom: calc(80px + var(--space-4) + env(safe-area-inset-bottom));
     transform: translateX(50%);
+    left: var(--space-4);
+    right: var(--space-4);
+  }
+
+  .toast {
+    max-width: none;
+    min-width: auto;
   }
 
   .bottom-nav {
     display: flex;
   }
 
+  /* Mobile action buttons - show primary actions only, others in overflow */
   .btn-group-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: var(--space-1);
+  }
+
+  .btn-group-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Clipboard specific mobile styles */
+  .clipboard-item-cell {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .clipboard-item-name {
+    font-weight: var(--font-weight-semibold);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .clipboard-item-name .filename-truncate {
+    max-width: none;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .clipboard-item-meta {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+  }
+
+  /* Tags on mobile */
+  .tag-list {
     flex-wrap: wrap;
+  }
+
+  .tag-badge {
+    font-size: var(--font-size-xs);
   }
 }
 
