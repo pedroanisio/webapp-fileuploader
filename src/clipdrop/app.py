@@ -26,6 +26,7 @@ from flask_dance.consumer import oauth_authorized, oauth_error
 from flask_dance.contrib.github import make_github_blueprint
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy.exc import IntegrityError
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 
 from clipdrop.crypto import load_key_from_env
@@ -93,6 +94,10 @@ def create_app(config=None):
         template_folder=str(package_dir / "templates"),
         static_folder=str(package_dir / "static"),
     )
+
+    # Apply ProxyFix to handle reverse proxy headers (X-Forwarded-Proto, X-Forwarded-For, etc.)
+    # This ensures OAuth redirects use https:// when behind a proxy like nginx or Cloudflare
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # Load configuration
     secret_key = os.getenv("SECRET_KEY")
